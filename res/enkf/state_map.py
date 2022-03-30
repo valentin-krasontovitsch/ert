@@ -107,7 +107,7 @@ class StateMap(BaseCClass):
         @type select_mask: RealizationStateEnum
         """
         assert isinstance(select_mask, RealizationStateEnum)
-        return _lib.state_map.select_matching(self, select_mask, True)
+        return _lib.state_map.select_matching(self, int(select_mask), True)
 
     def deselectMatching(self, select_mask):
         """
