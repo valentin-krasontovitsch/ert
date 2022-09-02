@@ -188,6 +188,7 @@ def config_dicts(draw):
     config_dict = draw(
         st.fixed_dictionaries(
             {
+                ConfigKeys.NUM_REALIZATIONS: st.just(1),
                 ConfigKeys.ECLBASE: st.just(draw(words) + "%d"),
                 ConfigKeys.RUNPATH_FILE: file_names,
                 ConfigKeys.ALPHA_KEY: small_floats,
@@ -280,7 +281,6 @@ def config_dicts(draw):
 
 def to_config_file(filename, config_dict):
     with open(filename, "w+") as config:
-        config.write("NUM_REALIZATIONS  1\n")
         config.write(
             f"{ConfigKeys.RUNPATH_FILE} {config_dict[ConfigKeys.RUNPATH_FILE]}\n"
         )
@@ -325,6 +325,7 @@ def to_config_file(filename, config_dict):
                 )
 
         for key in [
+            ConfigKeys.NUM_REALIZATIONS,
             ConfigKeys.DATA_FILE,
             ConfigKeys.LICENSE_PATH,
             ConfigKeys.RANDOM_SEED,
