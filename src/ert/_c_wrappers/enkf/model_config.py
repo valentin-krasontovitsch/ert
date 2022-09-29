@@ -32,7 +32,7 @@ class ModelConfig(BaseCClass):
     _alloc = ResPrototype(
         "void*  model_config_alloc(config_content, \
                                    char*, ext_joblist, \
-                                   int, ecl_sum)",
+                                   ecl_sum)",
         bind=False,
     )
     _alloc_full = ResPrototype(
@@ -100,7 +100,6 @@ class ModelConfig(BaseCClass):
         self,
         data_root,
         joblist,
-        last_history_restart,
         refcase,
         config_content=None,
         config_dict=None,
@@ -119,9 +118,7 @@ class ModelConfig(BaseCClass):
             )
 
         if config_dict is None:
-            c_ptr = self._alloc(
-                config_content, data_root, joblist, last_history_restart, refcase
-            )
+            c_ptr = self._alloc(config_content, data_root, joblist, refcase)
         else:
             # MAX_RESAMPLE_KEY
             max_resample = config_dict.get(ConfigKeys.MAX_RESAMPLE, 1)
