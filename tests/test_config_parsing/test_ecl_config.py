@@ -17,4 +17,4 @@ def test_ecl_config_dict_creates_equal_config(config_dict):
     to_config_file(filename, config_dict)
     res_config = ResConfig(user_config_file=filename)
     config_dict[ConfigKeys.CONFIG_DIRECTORY] = cwd
-    assert res_config.ecl_config == EclConfig(config_dict=config_dict)
+    assert res_config.ecl_config == EclConfig.from_dict(config_dict=config_dict)

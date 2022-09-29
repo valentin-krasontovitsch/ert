@@ -118,7 +118,10 @@ class ResConfig:
         else:
             self.random_seed = None
         self.analysis_config = AnalysisConfig(config_content=config_content)
-        self.ecl_config = EclConfig(config_content=config_content)
+
+        config_content_as_dict = config_content.as_dict()
+        self.ecl_config = EclConfig.from_dict(config_content_as_dict)
+
         self.queue_config = QueueConfig(config_content=config_content)
 
         self.ert_workflow_list = ErtWorkflowList(
@@ -157,14 +160,14 @@ class ResConfig:
 
         self.ensemble_config = EnsembleConfig(
             config_content=config_content,
-            grid=self.ecl_config.getGrid(),
-            refcase=self.ecl_config.getRefcase(),
+            grid=self.ecl_config.grid,
+            refcase=self.ecl_config.refcase,
         )
 
         self.model_config = ModelConfig(
             data_root=self.config_path,
             joblist=self.site_config.get_installed_jobs(),
-            refcase=self.ecl_config.getRefcase(),
+            refcase=self.ecl_config.refcase,
             config_content=config_content,
         )
 
@@ -180,7 +183,7 @@ class ResConfig:
         self.site_config = SiteConfig.from_config_dict(config_dict=config_dict)
         self.random_seed = config_dict.get(ConfigKeys.RANDOM_SEED, None)
         self.analysis_config = AnalysisConfig(config_dict=config_dict)
-        self.ecl_config = EclConfig(config_dict=config_dict)
+        self.ecl_config = EclConfig.from_dict(config_dict=config_dict)
         self.queue_config = QueueConfig(config_dict=config_dict)
 
         self.ert_workflow_list = ErtWorkflowList(
@@ -215,15 +218,15 @@ class ResConfig:
         )
 
         self.ensemble_config = EnsembleConfig(
-            grid=self.ecl_config.getGrid(),
-            refcase=self.ecl_config.getRefcase(),
+            grid=self.ecl_config.grid,
+            refcase=self.ecl_config.refcase,
             config_dict=config_dict,
         )
 
         self.model_config = ModelConfig(
             data_root=self.config_path,
             joblist=self.site_config.get_installed_jobs(),
-            refcase=self.ecl_config.getRefcase(),
+            refcase=self.ecl_config.refcase,
             config_dict=config_dict,
         )
 
