@@ -120,7 +120,11 @@ class ResConfig:
         self.analysis_config = AnalysisConfig(config_content=config_content)
 
         config_content_as_dict = config_content.as_dict()
-        self.ecl_config = EclConfig.from_dict(config_content_as_dict)
+        config_content_as_dict_simplified = {
+            key: value[0][0] if len(value[0]) == 1 else value[0]
+            for key, value in config_content_as_dict.items()
+        }
+        self.ecl_config = EclConfig.from_dict(config_content_as_dict_simplified)
 
         self.queue_config = QueueConfig(config_content=config_content)
 
