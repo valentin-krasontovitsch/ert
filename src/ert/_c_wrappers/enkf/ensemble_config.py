@@ -135,7 +135,6 @@ class EnsembleConfig(BaseCClass):
                     grid,
                     self._get_trans_table(),
                     field.get(ConfigKeys.OUT_FILE),
-                    field.get(ConfigKeys.ENKF_INFILE),
                     field.get(ConfigKeys.FORWARD_INIT),
                     field.get(ConfigKeys.INIT_TRANSFORM),
                     field.get(ConfigKeys.OUTPUT_TRANSFORM),

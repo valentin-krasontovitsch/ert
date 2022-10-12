@@ -64,9 +64,6 @@ class EnkfConfigNode(BaseCClass):
     _get_enkf_outfile = ResPrototype(
         "char* enkf_config_node_get_enkf_outfile(enkf_config_node)"
     )
-    _get_enkf_infile = ResPrototype(
-        "char* enkf_config_node_get_enkf_infile(enkf_config_node)"
-    )
     _get_init_file_fmt = ResPrototype(
         "char* enkf_config_node_get_init_file_fmt(enkf_config_node)"
     )
@@ -117,8 +114,7 @@ class EnkfConfigNode(BaseCClass):
     _update_parameter_field = ResPrototype(
         "void enkf_config_node_update_parameter_field(enkf_config_node, \
                                                       char*, \
-                                                      char*, \
-                                                      enkf_truncation_type_enum, \
+                                                      char*, \ enkf_truncation_type_enum, \
                                                       double, \
                                                       double, \
                                                       char*, \
@@ -127,7 +123,6 @@ class EnkfConfigNode(BaseCClass):
     )
     _update_general_field = ResPrototype(
         "void enkf_config_node_update_general_field(enkf_config_node, \
-                                                    char*, \
                                                     char*, \
                                                     char*, \
                                                     enkf_truncation_type_enum, \
@@ -168,9 +163,6 @@ class EnkfConfigNode(BaseCClass):
 
     def getSummaryModelConfig(self) -> SummaryConfig:
         return SummaryConfig.createCReference(self._get_ref(), parent=self)
-
-    def get_enkf_infile(self):
-        return self._get_enkf_infile()
 
     def get_init_file_fmt(self):
         return self._get_init_file_fmt()
@@ -323,7 +315,6 @@ class EnkfConfigNode(BaseCClass):
         grid,
         field_trans_table,
         ecl_file,
-        enkf_infile,
         forward_init,
         init_transform,
         output_transform,
@@ -363,7 +354,6 @@ class EnkfConfigNode(BaseCClass):
         elif var_type_string == ConfigKeys.GENERAL_KEY:
             config_node._update_general_field(
                 ecl_file,
-                enkf_infile,
                 init_file_fmt,
                 truncation,
                 value_min,
@@ -435,8 +425,6 @@ class EnkfConfigNode(BaseCClass):
             if self.get_init_file_fmt() != other.get_init_file_fmt():
                 return False
             if self.get_enkf_outfile() != other.get_enkf_outfile():
-                return False
-            if self.get_enkf_infile() != other.get_enkf_infile():
                 return False
             if self.getUseForwardInit() != other.getUseForwardInit():
                 return False

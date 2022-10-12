@@ -288,31 +288,20 @@ void enkf_config_node_update_parameter_field(enkf_config_node_type *config_node,
 
 void enkf_config_node_update_general_field(
     enkf_config_node_type *config_node, const char *enkf_outfile_fmt,
-    const char *enkf_infile_fmt, const char *init_file_fmt, int truncation,
+    const char *init_file_fmt, int truncation,
     double value_min, double value_max, const char *init_transform,
     const char *input_transform, const char *output_transform) {
 
     field_file_format_type export_format = field_config_default_export_format(
         enkf_outfile_fmt); /* Purely based on extension, recognizes ROFF and GRDECL, the rest will be ecl_kw format. */
-    {
-        enkf_var_type var_type = INVALID_VAR;
-        if (enkf_infile_fmt == NULL)
-            var_type = PARAMETER;
-        else {
-            if (enkf_outfile_fmt == NULL)
-                var_type = DYNAMIC_RESULT; /* Probably not very realistic */
-            else
-                util_abort("%s: this used to be DYNAMIC_STATE ?? \n", __func__);
-        }
-        config_node->var_type = var_type;
-    }
+    config_node->var_type = PARAMETER;
     field_config_update_general_field((field_config_type *)config_node->data,
                                       truncation, value_min, value_max,
                                       export_format, init_transform,
                                       input_transform, output_transform);
 
     enkf_config_node_update(config_node, init_file_fmt, enkf_outfile_fmt,
-                            enkf_infile_fmt);
+                            NULL);
 }
 
 /**
