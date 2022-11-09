@@ -7,6 +7,7 @@ from hypothesis import assume, given
 from ert._c_wrappers.enkf import ConfigKeys, ResConfig
 
 from .config_dict_generator import config_dicts, to_config_file
+from .conftest import TestHypothesisUniqueDir
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -19,16 +20,20 @@ def test_different_defines_give_different_subst_lists(config_dict1, config_dict2
     )
 
 
-@pytest.mark.usefixtures("use_tmpdir")
-@given(config_dicts())
-def test_from_dict_and_from_file_creates_equal_subst_lists(config_dict):
-    filename = config_dict[pytest.TEST_CONFIG_FILE_KEY]
-    to_config_file(filename, config_dict)
-    res_config_from_file = ResConfig(user_config_file=filename)
-    res_config_from_dict = ResConfig(config_dict=config_dict)
-    assert (
-        res_config_from_file.substitution_list == res_config_from_dict.substitution_list
-    )
+class TestSubstList(TestHypothesisUniqueDir):
+    @pytest.mark.usefixtures("use_tmpdir")
+    @given(config_dicts())
+    def test_from_dict_and_from_file_creates_equal_subst_lists(self, config_dict):
+        filename = config_dict[pytest.TEST_CONFIG_FILE_KEY]
+        to_config_file(filename, config_dict)
+
+        res_config_from_file = ResConfig(user_config_file=filename)
+        res_config_from_dict = ResConfig(config_dict=config_dict)
+
+        assert (
+            res_config_from_file.substitution_list
+            == res_config_from_dict.substitution_list
+        )
 
 
 @pytest.mark.usefixtures("use_tmpdir")
