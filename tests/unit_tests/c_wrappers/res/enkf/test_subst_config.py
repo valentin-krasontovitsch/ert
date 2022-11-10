@@ -25,7 +25,6 @@ def fixture_snake_oil_structure_config(copy_case):
     return {
         ConfigKeys.NUM_REALIZATIONS: 1,
         ConfigKeys.RUNPATH_FILE: "runpath",
-        pytest.TEST_CONFIG_FILE_KEY: config_file_name,
         ConfigKeys.DEFINE_KEY: {
             "<CWD>": cwd,
             "<CONFIG_PATH>": cwd,
@@ -40,7 +39,6 @@ def fixture_snake_oil_structure_config(copy_case):
 
 @pytest.fixture(name="snake_oil_structure_config_file")
 def fixture_snake_oil_structure_config_file(snake_oil_structure_config):
-    filename = snake_oil_structure_config[pytest.TEST_CONFIG_FILE_KEY]
     with open(file=filename, mode="w+", encoding="utf-8") as config:
         # necessary in the file, but irrelevant to this test
         config.write("JOBNAME  Job%d\n")

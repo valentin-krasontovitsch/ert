@@ -239,7 +239,6 @@ def config_dicts(draw):
     config_dict = draw(
         st.fixed_dictionaries(
             {
-                pytest.TEST_CONFIG_FILE_KEY: config_file_name,
                 ConfigKeys.NUM_REALIZATIONS: positives,
                 ConfigKeys.ECLBASE: st.just(draw(words) + "%d"),
                 ConfigKeys.RUNPATH_FILE: st.just(draw(file_names) + "runpath"),
