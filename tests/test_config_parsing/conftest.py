@@ -1,4 +1,5 @@
 import os
+from functools import wraps
 from uuid import uuid4 as generate_random_unique_id
 
 import pytest
@@ -26,3 +27,19 @@ class TestHypothesisUniqueDir:
             test_func()
         finally:
             os.chdir(original_working_directory)
+
+
+def use_unique_dir(test_func):
+    @wraps(test_func)
+    def wrapper(*args, **kw_args):
+        original_working_directory = os.getcwd()
+        unique_dir_name = str(generate_random_unique_id())
+        unique_dir_path = os.path.join(original_working_directory, unique_dir_name)
+        os.mkdir(unique_dir_path)
+        os.chdir(unique_dir_path)
+        try:
+            test_func(*args, **kw_args)
+        finally:
+            os.chdir(original_working_directory)
+
+    return wrapper

@@ -7,7 +7,7 @@ from hypothesis import assume, given
 from ert._c_wrappers.enkf import ConfigKeys, ResConfig
 
 from .config_dict_generator import config_dicts, to_config_file
-from .conftest import TestHypothesisUniqueDir
+from .conftest import TestHypothesisUniqueDir, use_unique_dir
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -38,7 +38,9 @@ class TestSubstList(TestHypothesisUniqueDir):
 
 @pytest.mark.usefixtures("use_tmpdir")
 @given(config_dicts())
+@use_unique_dir
 def test_complete_config_reads_correct_values(config_dict):
+    print(os.getcwd())
     substitution_list = ResConfig(config_dict=config_dict).substitution_list
     assert substitution_list["<CWD>"] == config_dict[ConfigKeys.CONFIG_DIRECTORY]
     assert (
