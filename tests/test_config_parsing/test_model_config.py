@@ -1,7 +1,7 @@
 import os.path
 
 import pytest
-from hypothesis import given
+from hypothesis import given, reproduce_failure
 
 from ert._c_wrappers.enkf import ModelConfig, ResConfig
 from ert._c_wrappers.enkf.config_keys import ConfigKeys
@@ -59,11 +59,13 @@ def test_default_model_config_run_path(tmpdir):
 
 @pytest.mark.usefixtures("use_tmpdir")
 @given(config_dicts())
+@reproduce_failure("6.56.3", b"AXicY2BkgECGgWWgAEYswliFcMlgaMKjBgcAADq+AFM=")
 def test_model_config_from_dict_and_user_config(config_dict):
     filename = "config.ert"
     to_config_file(filename, config_dict)
 
     res_config_from_file = ResConfig(user_config_file=filename)
-    res_config_from_dict = ResConfig(config_dict=config_dict)
+    # res_config_from_dict = ResConfig(config_dict=config_dict)
 
-    assert res_config_from_file.model_config == res_config_from_dict.model_config
+    # assert res_config_from_file.model_config == res_config_from_dict.model_config
+    assert False

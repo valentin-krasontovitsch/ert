@@ -331,11 +331,17 @@ class ResConfig:
             job.convertToCReference(None)
             jobs.append(job)
 
+        print(
+            f"res_config init, before model config, DATA_ROOT in environ: {'DATA_ROOT' in os.environ}"
+        )
         self.forward_model = ForwardModel(jobs=jobs)
         self.model_config = ModelConfig(
             data_root=self.config_path,
             refcase=self.ensemble_config.refcase,
             config_content=user_config_content,
+        )
+        print(
+            f"res config init, after model config, DATA_ROOT in environ: {'DATA_ROOT' in os.environ}"
         )
 
     # build configs from config dict

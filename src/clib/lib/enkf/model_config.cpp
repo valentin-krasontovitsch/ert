@@ -310,13 +310,19 @@ void model_config_set_data_root(model_config_type *model_config,
                                 const char *data_root) {
     model_config->data_root =
         util_realloc_string_copy(model_config->data_root, data_root);
-    setenv("DATA_ROOT", data_root, 1);
+    printf("setting data root in env to %s!\n", data_root);
+    int rc = setenv("DATA_ROOT", data_root, 1);
+    printf("return code of setenv call: %d\n", rc);
+    printf("fetched in C from env: `%s`\n", getenv("DATA_ROOT"));
 }
 
 static void model_config_set_default_data_root(model_config_type *model_config,
                                                const char *data_root) {
     model_config->default_data_root = util_alloc_string_copy(data_root);
-    setenv("DATA_ROOT", data_root, 1);
+    printf("setting default data root in env to %s!\n", data_root);
+    int rc = setenv("DATA_ROOT", data_root, 1);
+    printf("return code: of setenv call: %d\n", rc);
+    printf("fetched in C from env: `%s`\n", getenv("DATA_ROOT"));
 }
 
 void model_config_init(model_config_type *model_config,
