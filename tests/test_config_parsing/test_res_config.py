@@ -120,9 +120,11 @@ def test_default_ens_path(tmpdir):
         config_file = "test.ert"
         with open(config_file, "w", encoding="utf-8") as f:
             f.write(
-                """
-NUM_REALIZATIONS  1
-            """
+                dedent(
+                    """
+                    NUM_REALIZATIONS  1
+                    """
+                )
             )
         res_config = ResConfig(config_file)
         # By default, the ensemble path is set to 'storage'
@@ -130,9 +132,11 @@ NUM_REALIZATIONS  1
 
         with open(config_file, "a", encoding="utf-8") as f:
             f.write(
-                """
-ENSPATH storage
-            """
+                dedent(
+                    """
+                    ENSPATH storage
+                    """
+                )
             )
 
         # Set the ENSPATH in the config file
@@ -191,52 +195,84 @@ def test_that_queue_config_dict_negative_value_invalid(
         ResConfig(config_dict=config_dict)
 
 
+def write_config_content(test_config_contents: str) -> str:
+    test_config_file_name = "test.ert"
+    with open(test_config_file_name, "w", encoding="utf-8") as fh:
+        fh.write(test_config_contents)
+    return test_config_file_name
+
+
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_non_existant_job_directory_gives_config_validation_error():
-    test_config_file_base = "test"
-    test_config_file_name = f"{test_config_file_base}.ert"
-    test_config_contents = dedent(
-        """
+@pytest.mark.parametrize(
+    "config_file_contents,match_text,extra_steps,just_warns",
+    [
+        pytest.param(
+            dedent(
+                """
         NUM_REALIZATIONS  1
         DEFINE <STORAGE> storage/<CONFIG_FILE_BASE>-<DATE>
         RUNPATH <STORAGE>/runpath/realization-<IENS>/iter-<ITER>
         ENSPATH <STORAGE>/ensemble
         INSTALL_JOB_DIRECTORY does_not_exist
         """
-    )
-    with open(test_config_file_name, "w", encoding="utf-8") as fh:
-        fh.write(test_config_contents)
-    with pytest.raises(
-        expected_exception=ConfigValidationError,
-        match="Unable to locate job directory",
-    ):
-        ResConfig(user_config_file=test_config_file_name)
-
-
-@pytest.mark.usefixtures("use_tmpdir")
-def test_that_empty_job_directory_gives_warning():
-    test_config_file_base = "test"
-    test_config_file_name = f"{test_config_file_base}.ert"
-    test_config_contents = dedent(
-        """
-        NUM_REALIZATIONS  1
-        DEFINE <STORAGE> storage/<CONFIG_FILE_BASE>-<DATE>
-        RUNPATH <STORAGE>/runpath/realization-<IENS>/iter-<ITER>
-        ENSPATH <STORAGE>/ensemble
-        INSTALL_JOB_DIRECTORY empty
-        """
-    )
-    os.mkdir("empty")
-    with open(test_config_file_name, "w", encoding="utf-8") as fh:
-        fh.write(test_config_contents)
-    with pytest.warns(ConfigWarning, match="No files found in job directory"):
-        _ = ResConfig(user_config_file=test_config_file_name)
+            ),
+            "Unable to locate job directory",
+            None,
+            False,
+            id="not-existing-job-dir",
+        ),
+        pytest.param(
+            dedent(
+                """
+                NUM_REALIZATIONS  1
+                DEFINE <STORAGE> storage/<CONFIG_FILE_BASE>-<DATE>
+                RUNPATH <STORAGE>/runpath/realization-<IENS>/iter-<ITER>
+                ENSPATH <STORAGE>/ensemble
+                INSTALL_JOB_DIRECTORY empty
+                """
+            ),
+            "No files found in job directory",
+            lambda: os.mkdir("empty"),
+            True,
+            id="empty-job-dir-gives-warning",
+        ),
+        pytest.param(
+            dedent(
+                """
+                NUM_REALIZATIONS  1
+                DEFINE <STORAGE> storage/<CONFIG_FILE_BASE>-<DATE>
+                RUNPATH <STORAGE>/runpath/realization-<IENS>/iter-<ITER>
+                ENSPATH <STORAGE>/ensemble
+                INSTALL_JOB_DIRECTORY empty
+                """
+            ),
+            "No files found in job directory",
+            None,
+            False,
+            id="loading-non-existant-workflow-gives-error",
+        ),
+    ],
+)
+def test_various_config_errors(
+    config_file_contents: str, match_text: str, extra_steps: callable, just_warns: bool
+):
+    test_config_file_name = write_config_content(config_file_contents)
+    if extra_steps:
+        extra_steps()
+    if just_warns:
+        with pytest.warns(ConfigWarning, match=match_text):
+            ResConfig(user_config_file=test_config_file_name)
+    else:
+        with pytest.raises(
+            expected_exception=ConfigValidationError,
+            match=match_text,
+        ):
+            ResConfig(user_config_file=test_config_file_name)
 
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_loading_non_existant_workflow_gives_validation_error():
-    test_config_file_base = "test"
-    test_config_file_name = f"{test_config_file_base}.ert"
+    test_config_file_name = "test.ert"
     test_config_contents = dedent(
         """
         NUM_REALIZATIONS  1
@@ -254,8 +290,7 @@ def test_that_loading_non_existant_workflow_gives_validation_error():
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_loading_non_existant_workflow_job_gives_validation_error():
-    test_config_file_base = "test"
-    test_config_file_name = f"{test_config_file_base}.ert"
+    test_config_file_name = "test.ert"
     test_config_contents = dedent(
         """
         NUM_REALIZATIONS  1
@@ -291,13 +326,12 @@ def test_that_errors_in_job_files_give_validation_errors():
     with pytest.raises(
         expected_exception=ConfigValidationError,
     ):
-        _ = ResConfig(user_config_file=test_config_file_name)
+        ResConfig(user_config_file=test_config_file_name)
 
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_a_config_warning_is_given_when_eclbase_and_jobname_is_given():
-    test_config_file_base = "test"
-    test_config_file_name = f"{test_config_file_base}.ert"
+    test_config_file_name = "test.ert"
     test_config_contents = dedent(
         """
         NUM_REALIZATIONS  1
