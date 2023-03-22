@@ -13,3 +13,6 @@ jobs:
       - name: Check workflow files
         run: ls -l
         shell: bash
+      - name: say hello back
+        run: echo general kenobi!
+        shell: bash
