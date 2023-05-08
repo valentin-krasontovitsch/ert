@@ -1,7 +1,8 @@
+QUEUE_SYSTEM LOCAL
+RUNPATH poly_out/realization-<IENS>/iter-<ITER>
 
-QUEUE_SYSTEM LSF
-
-RUNPATH /scratch/johan_sverdrup/vkra-test/poly_out/realization-<IENS>/iter-<ITER>
+-- QUEUE_SYSTEM LSF
+-- RUNPATH /scratch/johan_sverdrup/vkra-test/poly_out/realization-<IENS>/iter-<ITER>
 
 OBS_CONFIG observations
 
