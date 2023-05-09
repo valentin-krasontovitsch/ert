@@ -382,6 +382,7 @@ class JobQueue(BaseCClass):
                 for real_id, status in changes.items()
             ]
         )
+        logger.info("$$$ we are in _publish_changes")
 
         retries = 0
         while True:
@@ -392,6 +393,7 @@ class JobQueue(BaseCClass):
                     while events:
                         await asyncio.wait_for(websocket.send(to_json(events[0])), 60)
                         events.popleft()
+                    logger.info("$$$ connected, and did the thing")
                     return
             except (ConnectionClosedError, asyncio.TimeoutError) as e:
                 if retries >= 10:
@@ -413,6 +415,8 @@ class JobQueue(BaseCClass):
                 )
 
                 await asyncio.sleep(backoff)
+            except Exception as e:
+                logger.exception(f"$$$ got an unexpected exception!\n{e}")
 
     async def execute_queue_via_websockets(  # pylint: disable=too-many-arguments
         self,
