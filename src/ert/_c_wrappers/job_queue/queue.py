@@ -382,15 +382,25 @@ class JobQueue(BaseCClass):
                 for real_id, status in changes.items()
             ]
         )
+        logger.info("$$$ we are in _publish_changes")
 
         async for websocket in connect(ws_uri, ssl=ssl_context, extra_headers=headers):
+            logger.info("$$$ managed to connect!")
             try:
                 while events:
                     await asyncio.wait_for(websocket.send(to_json(events[0])), 60)
                     events.popleft()
+                logger.info("$$$ processed all events!")
                 return
             except ConnectionClosedError:
+                logger.info("$$$ got ConnectionClosedError - continuing")
                 continue
+            except asyncio.TimeoutError:
+                logger.info("$$$ got TimeoutError - continuing")
+                continue
+            except BaseException as e:
+                logger.info(f"$$$ got unexpected exception: {e} - raising!")
+                raise
 
     async def execute_queue_via_websockets(  # pylint: disable=too-many-arguments
         self,
