@@ -181,6 +181,11 @@ class EnsembleEvaluator:
 
     @contextmanager
     def store_client(self, websocket):
+        logger.info(
+            f"$$$ got another client conn: id: {websocket.id}, "
+            f"loc_addr: {websocket.local_address}, "
+            f"rem_addr: {websocket.remote_address}"
+        )
         self._clients.add(websocket)
         yield
         self._clients.remove(websocket)
@@ -193,6 +198,7 @@ class EnsembleEvaluator:
             await websocket.send(event)
 
             async for message in websocket:
+                logger.info("$$$ latency for conn {websocket.id}: {websocket.latency}")
                 client_event = from_json(
                     message, data_unmarshaller=evaluator_unmarshaller
                 )
