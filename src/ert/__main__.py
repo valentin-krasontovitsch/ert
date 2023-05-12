@@ -586,7 +586,7 @@ def main() -> None:
     if args.verbose:
         root_logger = logging.getLogger()
         handler = logging.StreamHandler(sys.stdout)
-        handler.setLevel(logging.INFO)
+        handler.setLevel(logging.DEBUG)
         root_logger.addHandler(handler)
 
     FeatureToggling.update_from_args(args)
