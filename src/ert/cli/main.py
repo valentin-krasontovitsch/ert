@@ -103,7 +103,9 @@ def run_cli(args, _=None):
         execute_workflow(ert, storage, args.name)
         return
 
-    evaluator_server_config = EvaluatorServerConfig(custom_port_range=args.port_range)
+    evaluator_server_config = EvaluatorServerConfig(
+        custom_port_range=args.port_range, custom_host="localhost"
+    )
     experiment = storage.create_experiment(
         parameters=ert.ensembleConfig().parameter_configuration
     )
