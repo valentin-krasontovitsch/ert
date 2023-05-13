@@ -330,3 +330,96 @@ def test_exhaust_retries_in_run_and_get_successful_realizations(
         num_successful = ee.run_and_get_successful_realizations()
         assert mock.call_count == 9
     assert num_successful == num_realizations - num_failing
+
+
+from .ensemble_evaluator_utils import TestEnsemble
+
+
+def test_what_happens_to_monitor_when_ensemble_evaluator_dies(make_ee_config):
+    ensemble = TestEnsemble(0, 2, 1, 2, id_="0")
+    evaluator = EnsembleEvaluator(
+        ensemble,
+        make_ee_config(),
+        0,
+    )
+
+    with evaluator.run() as monitor:
+        events = monitor.track()
+
+        """
+        token = evaluator._config.token
+        cert = evaluator._config.cert
+
+        url = evaluator._config.url
+        """
+
+        # first snapshot before any event occurs
+        snapshot_event = next(events)
+        snapshot = Snapshot(snapshot_event.data)
+        assert snapshot.status == ENSEMBLE_STATE_UNKNOWN
+        """
+        # two dispatchers connect
+        with Client(
+            url + "/dispatch",
+            cert=cert,
+            token=token,
+            max_retries=1,
+            timeout_multiplier=1,
+        ) as dispatch1, Client(
+            url + "/dispatch",
+            cert=cert,
+            token=token,
+            max_retries=1,
+            timeout_multiplier=1,
+        ) as dispatch2:
+            # first dispatcher informs that job 0 is running
+            send_dispatch_event(
+                dispatch1,
+                identifiers.EVTYPE_FM_JOB_RUNNING,
+                f"/ert/ensemble/{evaluator.ensemble.id_}/real/0/step/0/job/0",
+                "event1",
+                {"current_memory_usage": 1000},
+            )
+
+            # second dispatcher informs that job 0 is running
+            send_dispatch_event(
+                dispatch2,
+                identifiers.EVTYPE_FM_JOB_RUNNING,
+                f"/ert/ensemble/{evaluator.ensemble.id_}/real/1/step/0/job/0",
+                "event1",
+                {"current_memory_usage": 1000},
+            )
+
+            # second dispatcher informs that job 0 is done
+            send_dispatch_event(
+                dispatch2,
+                identifiers.EVTYPE_FM_JOB_SUCCESS,
+                f"/ert/ensemble/{evaluator.ensemble.id_}/real/1/step/0/job/0",
+                "event1",
+                {"current_memory_usage": 1000},
+            )
+
+            # second dispatcher informs that job 1 is failed
+            send_dispatch_event(
+                dispatch2,
+                identifiers.EVTYPE_FM_JOB_FAILURE,
+                f"/ert/ensemble/{evaluator.ensemble.id_}/real/1/step/0/job/1",
+                "event_job_1_fail",
+                {identifiers.ERROR_MSG: "error"},
+            )
+        """
+
+        """
+        evt = next(events)
+        print(evt)
+        snapshot = Snapshot(evt.data)
+        assert snapshot.get_job("1", "0", "0").status == JOB_STATE_FINISHED
+        assert snapshot.get_job("0", "0", "0").status == JOB_STATE_RUNNING
+        assert snapshot.get_job("1", "0", "1").status == JOB_STATE_FAILURE
+        """
+
+        # this should hang hopefully
+        for unexpected_event in events:
+            raise AssertionError(
+                f"got unexpected event {unexpected_event} from monitor"
+            )

@@ -1,3 +1,4 @@
+import sys
 import asyncio
 import logging
 import pickle
@@ -204,6 +205,11 @@ class EnsembleEvaluator:
             )
             await websocket.send(event)
 
+            await asyncio.sleep(10)
+            sys.exit(1)
+            await websocket.close_transport()
+            await asyncio.sleep(20000)
+
             async for message in websocket:
                 logger.info(f"$$$ latency for conn {websocket.id}: {websocket.latency}")
                 client_event = from_json(
@@ -341,7 +347,8 @@ class EnsembleEvaluator:
                 terminated_attrs["datacontenttype"] = "application/octet-stream"
                 terminated_data = cloudpickle.dumps(self._result)
 
-            logger.debug("Sending termination-message to clients...")
+            logger.debug("NOT Sending termination-message to clients...")
+            """
             message = self._create_cloud_message(
                 EVTYPE_EE_TERMINATED,
                 data=terminated_data,
@@ -354,6 +361,7 @@ class EnsembleEvaluator:
                     *[client.send(message) for client in self._clients],
                     return_exceptions=True,
                 )
+            """
 
         logger.debug("Async server exiting.")
 
@@ -362,7 +370,10 @@ class EnsembleEvaluator:
         logger.debug("Server thread exiting.")
 
     def run(self) -> Monitor:
-        self._ws_thread.start()
+        try:
+            self._ws_thread.start()
+        except SystemExit:
+            print("argh argh argh")
         self._ensemble.evaluate(self._config)
         return Monitor(self._config.get_connection_info())
 
