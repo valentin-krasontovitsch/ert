@@ -3,6 +3,7 @@ RUNPATH poly_out/realization-<IENS>/iter-<ITER>
 
 -- QUEUE_SYSTEM LSF
 -- RUNPATH /scratch/johan_sverdrup/vkra-test/poly_out/realization-<IENS>/iter-<ITER>
+-- RUNPATH <CONFIG_PATH>/poly_out/realization-<IENS>/iter-<ITER>
 
 OBS_CONFIG observations
 

@@ -223,8 +223,10 @@ class EnsembleEvaluator:
         # do this here (not in __init__) to ensure the queue
         # is created on the right event-loop
         if self._dispatchers_connected is None:
+            logger.info("establishing dispatcher queue")
             self._dispatchers_connected = asyncio.Queue()
 
+        logger.info(f"adding dispatcher to queue - current #: {self._dispatchers_connected.qsize()}!")
         await self._dispatchers_connected.put(None)
         yield
         await self._dispatchers_connected.get()

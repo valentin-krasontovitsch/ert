@@ -417,6 +417,7 @@ class JobQueue(BaseCClass):
                 await asyncio.sleep(backoff)
             except Exception as e:
                 logger.exception(f"$$$ got an unexpected exception!\n{e}")
+                raise
 
     async def execute_queue_via_websockets(  # pylint: disable=too-many-arguments
         self,
