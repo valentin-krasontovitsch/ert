@@ -170,7 +170,6 @@ enkf_obs_type *enkf_obs_alloc(const history_source_type history,
     enkf_obs->refcase = refcase;
     enkf_obs->ensemble_config = ensemble_config;
     enkf_obs->error = "";
-    printf("hello there!\n");
 
     /* Initialize obs time: */
     if (enkf_obs->refcase) {
