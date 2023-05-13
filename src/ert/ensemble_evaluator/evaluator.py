@@ -40,7 +40,10 @@ from .state import (
     ENSEMBLE_STATE_STOPPED,
 )
 
+logging.basicConfig(level=logging.DEBUG)
+
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 _MAX_UNSUCCESSFUL_CONNECTION_ATTEMPTS = 3
 
@@ -127,11 +130,13 @@ class EnsembleEvaluator:
             self._signal_cancel()  # let ensemble know it should stop
 
     async def _send_snapshot_update(self, snapshot_update_event):
+        logger.debug(f"got an FM event! {snapshot_update_event}")
         message = self._create_cloud_message(
             EVTYPE_EE_SNAPSHOT_UPDATE,
             snapshot_update_event.to_dict(),
         )
         if message and self._clients:
+            logger.debug(f"and sending to the client(s): {message}")
             # Note return_exceptions=True in gather. This fire-and-forget
             # approach is currently how we deal with failures when trying
             # to send udates to clients. Rationale is that if sending to
@@ -190,7 +195,9 @@ class EnsembleEvaluator:
         yield
         self._clients.remove(websocket)
 
-    async def handle_client(self, websocket, path):
+    async def handle_client(
+        self, websocket: websockets.legacy.server.WebSocketServerProtocol, path
+    ):
         with self.store_client(websocket):
             event = self._create_cloud_message(
                 EVTYPE_EE_SNAPSHOT, self._ensemble.snapshot.to_dict()
@@ -198,7 +205,7 @@ class EnsembleEvaluator:
             await websocket.send(event)
 
             async for message in websocket:
-                logger.info("$$$ latency for conn {websocket.id}: {websocket.latency}")
+                logger.info(f"$$$ latency for conn {websocket.id}: {websocket.latency}")
                 client_event = from_json(
                     message, data_unmarshaller=evaluator_unmarshaller
                 )
@@ -227,6 +234,11 @@ class EnsembleEvaluator:
         # pylint: disable=not-async-context-manager
         # (false positive)
         async with self.count_dispatcher():
+            logger.info(
+                f"$$$ got another dispatch conn: id: {websocket.id}, "
+                f"loc_addr: {websocket.local_address}, "
+                f"rem_addr: {websocket.remote_address}"
+            )
             try:
                 async for msg in websocket:
                     try:
@@ -274,9 +286,13 @@ class EnsembleEvaluator:
     async def connection_handler(self, websocket, path):
         elements = path.split("/")
         if elements[1] == "client":
+            logger.debug("got client request!")
             await self.handle_client(websocket, path)
+            logger.debug("done with client request!")
         elif elements[1] == "dispatch":
+            logger.debug("got dispatch request!")
             await self.handle_dispatch(websocket, path)
+            logger.debug("done with dispatch request!")
         else:
             logger.info(f"Connection attempt to unknown path: {path}.")
 
@@ -296,8 +312,10 @@ class EnsembleEvaluator:
             process_request=self.process_request,
             max_queue=None,
             max_size=2**26,
+            logger=logger,
         ):
             await self._done
+            logger.debug("%%% we are done!")
             if self._dispatchers_connected is not None:
                 logger.debug(
                     f"Got done signal. {self._dispatchers_connected.qsize()} "
