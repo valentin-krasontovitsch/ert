@@ -13,6 +13,13 @@ from websockets.datastructures import Headers
 
 from ._wait_for_evaluator import wait_for_evaluator
 
+import logging
+
+logging.basicConfig(level=logging.DEBUG)
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
 
 class SyncWebsocketDuplexer:
     """Class for communicating bi-directionally with a websocket using a
@@ -59,8 +66,10 @@ class SyncWebsocketDuplexer:
         while not self._connection.done():
             time.sleep(0.1)
         try:
+            logger.debug("trying to connect...")
             self._connection.result()
         except Exception:
+            logger.debug("didn't work!")
             self.stop()
             raise
 
@@ -71,6 +80,7 @@ class SyncWebsocketDuplexer:
             extra_headers=self._extra_headers,
             max_size=2**26,
             max_queue=500,
+            logger=logger,
         )
 
         await wait_for_evaluator(
