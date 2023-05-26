@@ -188,7 +188,6 @@ class EnsembleEvaluator:
     def store_client(self, websocket):
         logger.info(
             f"$$$ got another client conn: id: {websocket.id}, "
-            f"loc_addr: {websocket.local_address}, "
             f"rem_addr: {websocket.remote_address}"
         )
         self._clients.add(websocket)
@@ -236,11 +235,16 @@ class EnsembleEvaluator:
         async with self.count_dispatcher():
             logger.info(
                 f"$$$ got another dispatch conn: id: {websocket.id}, "
-                f"loc_addr: {websocket.local_address}, "
                 f"rem_addr: {websocket.remote_address}"
             )
             try:
                 async for msg in websocket:
+                    logger.debug(
+                        "$$$ got msg from dispatch "
+                        f"{websocket.id}:{websocket.remote_address}, latency: "
+                        f"{websocket.latency}"
+                    )
+                    msg_proc_start_time = time.time()
                     try:
                         event = from_json(msg, data_unmarshaller=evaluator_unmarshaller)
                     except cloudevents.exceptions.DataUnmarshallerError:
@@ -273,6 +277,11 @@ class EnsembleEvaluator:
                         EVTYPE_ENSEMBLE_FAILED,
                     ]:
                         return
+                    logger.debug(
+                        f"$$$ handed msg from dispatcher "
+                        f"{websocket.id}@{websocket.remote_address} to dispatch "
+                        f"handler in {(time.time()-msg_proc_start_time):.6f}s"
+                    )
             except ConnectionClosedError as connection_error:
                 # Dispatchers my close the connection apruptly in the case of
                 #  * flaky network (then the dispatcher will try to reconnect)
@@ -314,8 +323,11 @@ class EnsembleEvaluator:
             max_size=2**26,
             logger=logger,
         ):
+            logger.debug(
+                f"$$$ server starting at {self._config.host}:{self._config.port}"
+            )
             await self._done
-            logger.debug("%%% we are done!")
+            logger.debug("$$$ we are done!")
             if self._dispatchers_connected is not None:
                 logger.debug(
                     f"Got done signal. {self._dispatchers_connected.qsize()} "
