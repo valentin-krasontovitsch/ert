@@ -261,7 +261,8 @@ class EnsembleEvaluator:
                 #  * job being killed due to MAX_RUNTIME
                 #  * job being killed by user
                 logger.error(
-                    f"a dispatcher abruptly closed a websocket: {str(connection_error)}"
+                    f"dispatcher id:{websocket.id} at {websocket.remote_address} "
+                    f"abruptly closed a websocket: {str(connection_error)}"
                 )
 
     async def connection_handler(self, websocket, path):
