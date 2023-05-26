@@ -47,6 +47,10 @@ class BatchingDispatcher:
             except IndexError:
                 break
 
+        if len(event_buffer) == 0:
+            logger.debug("no events to be processed in queue")
+            return
+
         function_to_events_map = OrderedDict()
         for f, event in event_buffer:
             if f not in function_to_events_map:
