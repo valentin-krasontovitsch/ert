@@ -14,7 +14,10 @@ from websockets.exceptions import (
     InvalidURI,
 )
 
+logging.basicConfig(level=logging.DEBUG)
+
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 
 class ClientConnectionError(Exception):
@@ -81,6 +84,7 @@ class Client:  # pylint: disable=too-many-instance-attributes
             self.url,
             ssl=self._ssl_context,
             extra_headers=self._extra_headers,
+            logger=logger,
         )
 
     async def _send(self, msg: AnyStr) -> None:

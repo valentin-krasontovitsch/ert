@@ -32,7 +32,10 @@ if TYPE_CHECKING:
     from ert._c_wrappers.enkf.run_arg import RunArg
 
 
+logging.basicConfig(level=logging.DEBUG)
+
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 LONG_RUNNING_FACTOR = 1.25
 
@@ -384,7 +387,9 @@ class JobQueue(BaseCClass):
         )
         logger.info("$$$ we are in _publish_changes")
 
-        async for websocket in connect(ws_uri, ssl=ssl_context, extra_headers=headers):
+        async for websocket in connect(
+            ws_uri, ssl=ssl_context, extra_headers=headers, logger=logger
+        ):
             logger.info("$$$ managed to connect!")
             try:
                 while events:
