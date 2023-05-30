@@ -322,6 +322,9 @@ class EnsembleEvaluator:
             max_queue=None,
             max_size=2**26,
             logger=logger,
+            ping_timeout=60,
+            ping_interval=60,
+            close_timeout=60,
         ):
             logger.debug(
                 f"$$$ server starting at {self._config.host}:{self._config.port}"

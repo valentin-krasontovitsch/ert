@@ -388,7 +388,14 @@ class JobQueue(BaseCClass):
         logger.info("$$$ we are in _publish_changes")
 
         async for websocket in connect(
-            ws_uri, ssl=ssl_context, extra_headers=headers, logger=logger
+            ws_uri,
+            ssl=ssl_context,
+            extra_headers=headers,
+            logger=logger,
+            open_timeout=60,
+            ping_timeout=60,
+            ping_interval=60,
+            close_timeout=60,
         ):
             logger.info("$$$ managed to connect!")
             try:
