@@ -55,13 +55,19 @@ class BatchingDispatcher:
             logger.debug("no events to be processed in queue")
             return
 
-        logger.debug(f"about to process {len(batch_of_events_for_processing)} events")
-
         function_to_events_map = OrderedDict()
         for f, event in batch_of_events_for_processing:
             if f not in function_to_events_map:
                 function_to_events_map[f] = []
             function_to_events_map[f].append(event)
+
+        logger.debug(
+            f"about to process {len(batch_of_events_for_processing)} events "
+            f"using {len(function_to_events_map)} different handle functions"
+        )
+        for _, events in function_to_events_map.items():
+            event_type = events[0]["type"]
+            logger.debug(f"got {len(events)} events of type {event_type}")
 
         def done_logger(_):
             logger.debug(
