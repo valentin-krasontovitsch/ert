@@ -32,6 +32,7 @@ class TrackerWorker(QObject):
     def consume_and_emit(self):
         logger.debug("tracking...")
         for event in self._tracker():
+            logger.debug("got an event!")
             if self._stopped:
                 logger.debug("stopped")
                 break

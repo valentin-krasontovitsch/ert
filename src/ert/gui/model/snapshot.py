@@ -14,6 +14,7 @@ from ert.ensemble_evaluator import state
 from ert.gui.model.node import Node, NodeType
 from ert.shared.status.utils import byte_with_unit
 
+logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 
@@ -102,6 +103,7 @@ class SnapshotModel(QAbstractItemModel):
 
         # If there are no realizations, there's nothing to prerender.
         if not snapshot.data().get(ids.REALS):
+            logger.debug("got no reals in event...")
             return None
 
         metadata: Dict[str, Any] = {
@@ -127,7 +129,9 @@ class SnapshotModel(QAbstractItemModel):
                     ]
 
         for real_id, real in snapshot.data()[ids.REALS].items():
+            logger.debug(f"real {real_id} contained in snapshot")
             if real.get(ids.STATUS):
+                logger.debug(f"real {real_id} has state {real[ids.STATUS]}")
                 metadata[REAL_STATUS_COLOR][real_id] = _QCOLORS[
                     state.REAL_STATE_TO_COLOR[real[ids.STATUS]]
                 ]
