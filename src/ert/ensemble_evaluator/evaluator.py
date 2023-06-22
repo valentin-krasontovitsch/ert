@@ -42,8 +42,6 @@ from .state import (
 
 logger = logging.getLogger(__name__)
 
-_MAX_UNSUCCESSFUL_CONNECTION_ATTEMPTS = 3
-
 
 class EnsembleEvaluator:
     # pylint: disable=too-many-instance-attributes
@@ -372,6 +370,7 @@ class EnsembleEvaluator:
     def run_and_get_successful_realizations(self) -> int:
         monitor = self.run()
         unsuccessful_connection_attempts = 0
+        max_sleep_time_seconds = 60
         while True:
             try:
                 for _ in monitor.track():
@@ -388,15 +387,10 @@ class EnsembleEvaluator:
                     f"run_and_get_successful_realizations caught {e}."
                     f"{unsuccessful_connection_attempts} unsuccessful attempts"
                 )
-                if (
-                    unsuccessful_connection_attempts
-                    == _MAX_UNSUCCESSFUL_CONNECTION_ATTEMPTS
-                ):
-                    logger.debug("Max connection attempts reached")
-                    self._signal_cancel()
-                    break
 
-                sleep_time = 0.25 * 2**unsuccessful_connection_attempts
+                sleep_time = min(
+                    0.25 * 2**unsuccessful_connection_attempts, max_sleep_time_seconds
+                )
                 logger.debug(
                     f"Sleeping for {sleep_time} seconds before attempting to reconnect"
                 )
