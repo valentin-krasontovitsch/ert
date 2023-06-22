@@ -93,7 +93,16 @@ class Job:
 
         process = Process(proc.pid)
         max_memory_usage = 0
+        sleep_time_seconds = 0
+        target_sleep_time_seconds = 10
+        initial_no_sleep_time_seconds = 30
+        start_time = time.time()
         while exit_code is None:
+            if (
+                sleep_time_seconds == 0
+                and time.time() - start_time > initial_no_sleep_time_seconds
+            ):
+                sleep_time_seconds = target_sleep_time_seconds
             try:
                 memory = process.memory_info().rss
             except (NoSuchProcess, AccessDenied, ZombieProcess):
@@ -106,6 +115,7 @@ class Job:
                 max_memory_usage = memory
 
             yield Running(self, max_memory_usage, memory)
+            time.sleep(sleep_time_seconds)
 
             try:
                 exit_code = process.wait(timeout=self.MEMORY_POLL_PERIOD)
