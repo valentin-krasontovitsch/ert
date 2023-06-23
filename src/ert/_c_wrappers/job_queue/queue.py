@@ -381,7 +381,7 @@ class JobQueue(BaseCClass):
             ]
         )
         while events:
-            await asyncio.wait_for(ee_connection.send(to_json(events[0])), 60)
+            await ee_connection.send(to_json(events[0]))
             events.popleft()
 
     async def _execution_loop_queue_via_websockets(
