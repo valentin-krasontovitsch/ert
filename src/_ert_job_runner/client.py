@@ -82,7 +82,7 @@ class Client:  # pylint: disable=too-many-instance-attributes
             ssl=self._ssl_context,
             extra_headers=self._extra_headers,
             open_timeout=60,
-            ping_timeout=60,
+            ping_timeout=None,
             ping_interval=60,
             close_timeout=60,
         )

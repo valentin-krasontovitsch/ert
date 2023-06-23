@@ -398,7 +398,7 @@ class JobQueue(BaseCClass):
             ssl=ee_ssl_context,
             extra_headers=ee_headers,
             open_timeout=60,
-            ping_timeout=60,
+            ping_timeout=None,
             ping_interval=60,
             close_timeout=60,
         ):
@@ -461,7 +461,7 @@ class JobQueue(BaseCClass):
                 ssl=ee_ssl_context,
                 extra_headers=ee_headers,
                 open_timeout=60,
-                ping_timeout=60,
+                ping_timeout=None,
                 ping_interval=60,
                 close_timeout=60,
             ) as ee_connection:
@@ -496,7 +496,7 @@ class JobQueue(BaseCClass):
             ssl=ee_ssl_context,
             extra_headers=ee_headers,
             open_timeout=60,
-            ping_timeout=60,
+            ping_timeout=None,
             ping_interval=60,
             close_timeout=60,
         ) as ee_connection:
