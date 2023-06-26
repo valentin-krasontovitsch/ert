@@ -25,6 +25,7 @@ class SyncWebsocketDuplexer:
         health_check_uri: str,
         cert: Union[str, bytes, os.PathLike],
         token: str,
+        who: Optional[str] = None,
     ) -> None:
         self._uri = uri
         self._hc_uri = health_check_uri
@@ -32,6 +33,8 @@ class SyncWebsocketDuplexer:
         self._extra_headers = Headers()
         if token is not None:
             self._extra_headers["token"] = token
+        if who is not None:
+            self._extra_headers["from"] = who
 
         # Mimics the behavior of the ssl argument when connection to
         # websockets. If none is specified it will deduce based on the url,

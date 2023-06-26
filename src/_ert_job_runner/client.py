@@ -58,6 +58,7 @@ class Client:  # pylint: disable=too-many-instance-attributes
         self._extra_headers = Headers()
         if token is not None:
             self._extra_headers["token"] = token
+        self._extra_headers["from"] = __name__
 
         # Mimics the behavior of the ssl argument when connection to
         # websockets. If none is specified it will deduce based on the url,

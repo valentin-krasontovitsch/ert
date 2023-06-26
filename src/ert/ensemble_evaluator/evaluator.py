@@ -264,14 +264,21 @@ class EnsembleEvaluator:
                     f"a dispatcher abruptly closed a websocket: {str(connection_error)}"
                 )
 
-    async def connection_handler(self, websocket, path):
+    async def connection_handler(self, websocket: WebSocketServerProtocol, path):
         elements = path.split("/")
+        fromm = (
+            websocket.request_headers["from"]
+            if "from" in websocket.request_headers
+            else "unknown"
+        )
+        logger.info(f"got new connection for {path} from {fromm}")
         if elements[1] == "client":
             await self.handle_client(websocket, path)
         elif elements[1] == "dispatch":
             await self.handle_dispatch(websocket, path)
         else:
             logger.info(f"Connection attempt to unknown path: {path}.")
+        logger.info(f"handling connection from {fromm} done!")
 
     async def process_request(self, path, request_headers):
         if request_headers.get("token") != self._config.token:

@@ -453,6 +453,7 @@ class JobQueue(BaseCClass):
         ee_headers = Headers()
         if ee_token is not None:
             ee_headers["token"] = ee_token
+        ee_headers["from"] = __name__
 
         try:
             # initial publish

@@ -32,6 +32,7 @@ class Monitor:
             self._ee_con_info.url,
             self._ee_con_info.cert,
             self._ee_con_info.token,
+            __name__,
         )
         return self
 
@@ -50,6 +51,7 @@ class Monitor:
                     self._ee_con_info.url,
                     self._ee_con_info.cert,
                     self._ee_con_info.token,
+                    __name__,
                 )
                 stack.callback(duplexer.stop)
             duplexer.send(to_json(cloud_event, data_marshaller=evaluator_marshaller))
@@ -89,6 +91,7 @@ class Monitor:
                     self._ee_con_info.url,
                     self._ee_con_info.cert,
                     self._ee_con_info.token,
+                    __name__,
                 )
                 stack.callback(duplexer.stop)
             for message in duplexer.receive():
