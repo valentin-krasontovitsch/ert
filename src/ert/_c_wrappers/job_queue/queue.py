@@ -394,7 +394,7 @@ class JobQueue(BaseCClass):
         while True:
             self.launch_jobs(pool_sema)
 
-            await asyncio.sleep(1)
+            await asyncio.sleep(30)
 
             for func in evaluators:
                 func()
