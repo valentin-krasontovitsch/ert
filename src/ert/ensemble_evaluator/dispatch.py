@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 
 class BatchingDispatcher:
-    def __init__(self, loop, timeout, max_batch=1000):
+    def __init__(self, loop, timeout, max_batch=100):
         self._timeout = timeout
         self._max_batch = max_batch
 
