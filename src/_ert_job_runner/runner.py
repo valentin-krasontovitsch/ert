@@ -1,4 +1,5 @@
 import os
+import time
 
 from _ert_job_runner.job import Job
 from _ert_job_runner.reporting.message import Finish, Init
@@ -56,6 +57,7 @@ class JobRunner:
         for job in job_queue:
             for status_update in job.run():
                 yield status_update
+                time.sleep(5)
 
                 if not status_update.success():
                     yield Finish().with_error("Not all jobs completed successfully.")
