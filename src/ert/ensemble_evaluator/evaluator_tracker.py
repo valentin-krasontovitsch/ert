@@ -118,9 +118,7 @@ class EvaluatorTracker:
     def track(
         self,
     ) -> Iterator[Union[FullSnapshotEvent, SnapshotUpdateEvent, EndEvent]]:
-        track_sleepy_time_seconds = 5
         while True:
-            time.sleep(track_sleepy_time_seconds)
             if self._work_queue.empty():
                 continue
             event = self._work_queue.get()
