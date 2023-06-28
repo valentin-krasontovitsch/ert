@@ -65,7 +65,7 @@ class EnsembleEvaluator:
         self._dispatcher = BatchingDispatcher(
             self._loop,
             timeout=2,
-            max_batch=100,
+            max_batch=1000,
         )
 
         for e_type, f in (

@@ -11,7 +11,9 @@ logger = logging.getLogger(__name__)
 class BatchingDispatcher:
     def __init__(self, loop, timeout, max_batch=100):
         self._timeout = timeout
+        self._input_timeout = timeout
         self._max_batch = max_batch
+        self._input_max_batch = max_batch
 
         self._LOOKUP_MAP = defaultdict(list)
         self._running = True
@@ -56,11 +58,19 @@ class BatchingDispatcher:
             function_to_events_map[f].append(event)
 
         def done_logger(_):
+            processing_time = time.time()-t0
             logger.debug(
                 f"processed {len(batch_of_events_for_processing)} events in "
-                f"{(time.time()-t0):.6f}s. "
+                f"{processing_time:.6f}s. "
                 f"{left_in_queue} left in queue"
             )
+            if processing_time >= 10:
+                logger.debug(f"adjusting batch size and timeout...")
+                self._max_batch = int(self._input_max_batch / 10)
+                self._timeout = 10 * self._input_timeout
+            else:
+                self._max_batch = self._input_max_batch
+                self._timeout = self._input_timeout
 
         events_handling = asyncio.gather(
             *[f(events) for f, events in function_to_events_map.items()]
