@@ -199,6 +199,7 @@ class JobQueueNode(BaseCClass):
         time_until_longer_sleep_seconds = 30
         use_random_sleep_offset = False
         while self.is_running(current_status):
+            logger.info(f"%%% we are still running, {current_status=}!")
             if (
                 self._start_time is None
                 and current_status == JobStatusType.JOB_QUEUE_RUNNING
