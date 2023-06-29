@@ -28,9 +28,10 @@ def test_the_simpler_snapshot_meta():
 
 
 
-def test_snapshot_merge(snapshot: Snapshot):
-    update_event = PartialSnapshot(snapshot)
+def test_snapshot_merge(): #snapshot: Snapshot):
+    update_event = PartialSnapshot()
     update_event.update_status(status=state.ENSEMBLE_STATE_STARTED)
+    assert update_event.status == state.ENSEMBLE_STATE_STARTED
 
     snapshot.merge_event(update_event)
 
