@@ -26,7 +26,7 @@ def test_snapshot_merge(snapshot: Snapshot):
 
     update_event = PartialSnapshot(snapshot)
     update_event.update_job(
-        real_id="1",
+        real_id="0",
         step_id="0",
         job_id="0",
         job=Job(
@@ -59,7 +59,6 @@ def test_snapshot_merge(snapshot: Snapshot):
     )
 
     snapshot.merge_event(update_event)
-
     assert snapshot.status == state.ENSEMBLE_STATE_STARTED
 
     assert snapshot.get_job(real_id="1", step_id="0", job_id="0") == Job(
