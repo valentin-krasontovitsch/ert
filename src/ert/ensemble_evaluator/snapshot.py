@@ -155,25 +155,31 @@ class PartialSnapshot:
         self._step_states = pd.DataFrame()
 
         # the job_states is a multiindex dataframe with realization, step_id and job_id as indices.
-        self._job_states = pd.DataFrame(
-            columns=[
-                "status",
-                "index",
-                "start_time",
-                "end_time",
-                "error",
-                "name",
-                "stderr",
-                "stdout",
-                "data" + DICT_SEP + "memory",
-            ],
-            index=pd.MultiIndex(
-                levels=[[], [], []],
-                codes=[[], [], []],
-                names=["real_id", "step_id", "job_id"],
-            ),
-        )
-        # Additionally, a column called "data/something" will be added whenever a data-dictionary is added,
+        self._job_states = {}
+        # keys are tuples of (real, step, job)
+
+        #self._job_states = pd.DataFrame(
+        #    columns=[
+        #        "status",
+        #        "index",
+        #        "start_time",
+        #        "end_time",
+        #        "error",
+        #        "name",
+        #        "stderr",
+        #        "stdout",
+        #        "data" + DICT_SEP + "memory",
+        #    ],
+        #    index=pd.MultiIndex(
+        #        levels=[[], [], []],
+        #        codes=[[], [], []],
+        #        names=["real_id", "step_id", "job_id"],
+        #    ),
+        #)
+
+        # ^^^ DO NOT USE DATAFRAMES FOR THIS UNLESS YOU KNOW THE FINAL SIZE  ^^^
+
+        ## Additionally, a column called "data/something" will be added whenever a data-dictionary is added,
         # containing e.g. memory information for the job. We flatten out that information for speed reasons.
 
         # self._ensemble_state: str = state.ENSEMBLE_STATE_UNKNOWN
@@ -190,6 +196,7 @@ class PartialSnapshot:
         self._ensemble_state = status
 
     def update_metadata(self, metadata: Dict[str, Any]) -> None:
+        print("update metadata")
         self._metadata.update(metadata)
         # todo: we don't' have the full snapshot in this object any longer, and the merge into
         # that will have to be done later!
@@ -213,6 +220,7 @@ class PartialSnapshot:
         steps_for_a_realization
         # real: "RealizationSnapshot",
     ) -> None:
+        print("update realization")
         # This four ifs could be accomplished in one line with a dict.update() operation
         if status is not None:
             self._realization_states.loc[real_id, "status"] = status
@@ -287,12 +295,10 @@ class PartialSnapshot:
         job: "Job",
     ) -> "PartialSnapshot":
         job_idx = (real_id, step_id, job_id)
-        if job_idx in self._job_states.index:
-            job_as_dict = self._job_states.loc[job_idx].to_dict()
-            job_as_dict.update(_flatten_job_data(job.dict()))
-            self._job_states.loc[job_idx] = job_as_dict
+        if job_idx in self._job_states.keys():
+            self._job_states[job_idx].update(_filter_nones(_flatten_job_data(job.dict())))
         else:
-            self._job_states.loc[job_idx] = _flatten_job_data(job.dict())
+            self._job_states[job_idx] = _flatten_job_data(job.dict())
 
         return self
         # self._apply_update(
@@ -307,6 +313,7 @@ class PartialSnapshot:
         # return self
 
     def to_dict(self) -> Mapping[str, Any]:
+        print("to_dict")
         _dict = {}
         if self._metadata:
             _dict["metadata"] = self._metadata
@@ -335,7 +342,6 @@ class PartialSnapshot:
 
     # pylint: disable=too-many-branches
     def from_cloudevent(self, event: CloudEvent) -> "PartialSnapshot":
-        start = time.time()
         e_type = event["type"]
         e_source = event["source"]
         status = _FM_TYPE_EVENT_TO_STATUS.get(e_type)
@@ -419,6 +425,7 @@ class PartialSnapshot:
         elif e_type in ids.EVGROUP_ENSEMBLE:
             self.update_status(_ENSEMBLE_TYPE_EVENT_TO_STATUS[e_type])
         elif e_type == ids.EVTYPE_EE_SNAPSHOT_UPDATE:
+            print("boom, not wanting this")
             self._data = _recursive_update(self._data, event.data, check_key=False)
         else:
             raise ValueError(f"Unknown type: {e_type}")
@@ -432,7 +439,7 @@ class Snapshot:
         self._data: TPMap[str, Any] = pyrsistent.freeze(input_dict)
 
     def merge_event(self, event: PartialSnapshot) -> None:
-        #print("MERGE EVENTV")
+        print("MERGE EVENTV")
         #pprint.pprint(event.to_dict())
         #pprint.pprint(self.to_dict())
         self._data = _recursive_update(self._data, event.data())
@@ -440,7 +447,7 @@ class Snapshot:
         #pprint.pprint(self.to_dict())
 
     def merge(self, update: Mapping[str, Any]) -> None:
-        #print("MERGE *****'")
+        print("MERGE *****'")
         #pprint.pprint(self.to_dict())
         #pprint.pprint(update)
         self._data = _recursive_update(self._data, update)
@@ -448,7 +455,7 @@ class Snapshot:
         #pprint.pprint(self.to_dict())
 
     def merge_metadata(self, metadata: Dict[str, Any]) -> None:
-        #print("MERGE metadata *****'")
+        print("MERGE metadata *****'")
         #pprint.pprint(self.to_dict())
         #pprint.pprint(metadata)
         self._data = _recursive_update(
