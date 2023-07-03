@@ -21,14 +21,25 @@ def test_the_simpler_snapshot_status():
     a.update_status(state.ENSEMBLE_STATE_STARTED)
     assert a.status == state.ENSEMBLE_STATE_STARTED
 
+
 def test_the_simpler_snapshot_meta():
     a = PartialSnapshot()
-    a.update_metadata({'foo': 'bar'})
-    assert a.to_dict()["metadata"] == {'foo': 'bar'}
+    a.update_metadata({"foo": "bar"})
+    assert a.to_dict()["metadata"] == {"foo": "bar"}
 
 
+def test_the_simpler_snapshot_update_realization():
+    a = PartialSnapshot()
+    a.update_realization(
+        0, state.REALIZATION_STATE_PENDING, False, datetime.now(), datetime.now(), None
+    )
+    print(a._realization_states)
+    assert a.data() is something
+    a.update_status(state.ENSEMBLE_STATE_STARTED)
+    assert a.status == state.ENSEMBLE_STATE_STARTED
 
-def test_snapshot_merge(): #snapshot: Snapshot):
+
+def test_snapshot_merge(snapshot):  # snapshot: Snapshot):
     update_event = PartialSnapshot()
     update_event.update_status(status=state.ENSEMBLE_STATE_STARTED)
     assert update_event.status == state.ENSEMBLE_STATE_STARTED

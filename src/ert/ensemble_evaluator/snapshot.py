@@ -7,6 +7,7 @@ import re
 import typing
 from collections import defaultdict
 from typing import Any, Dict, Mapping, Optional, Sequence, Union, cast
+import pprint
 
 import pyrsistent
 from cloudevents.http import CloudEvent
@@ -36,6 +37,7 @@ def _recursive_update(
         else:
             left = left.set(k, v)
     return left
+
 
 _regexp_pattern = r"(?<=/{token}/)[^/]+"
 
@@ -105,15 +107,77 @@ def convert_iso8601_to_datetime(
     return parse(timestamp)
 
 
+DICT_SEP = "/"
+
+
+def _flatten_job_data(job_dict: dict) -> dict:
+    if "data" in job_dict.keys() and job_dict["data"]:
+        for key, value in job_dict["data"].items():
+            job_dict["data" + DICT_SEP + key] = value
+        del job_dict["data"]
+    return job_dict
+
+
+def _unflatten_job_data(job_dict: dict) -> dict:
+    data = {}
+    key_prefix = "data" + DICT_SEP
+    for key, value in job_dict.items():
+        if key.startswith(key_prefix):
+            data[key[len(key_prefix) :]] = value
+    unflattened_dict = {
+        key: value for key, value in job_dict.items() if not key.startswith(key_prefix)
+    }
+    unflattened_dict["data"] = data
+    return unflattened_dict
+
+
+def _fix_date_dtypes(some_dict: dict) -> dict:
+    for time_key in ["start_time", "end_time"]:
+        if time_key in some_dict:
+            some_dict[time_key] = some_dict[time_key].to_pydatetime()
+    return some_dict
+
+
+def _filter_nones(some_dict: dict) -> dict:
+    return {key: value for key, value in some_dict.items() if value is not None}
+
+
 class PartialSnapshot:
-    def __init__(self) -> None:
-        # 4 lists will also be fine for this, but the DataFrame has nice functions for making dicts.
-        self._realization_states = pd.DataFrame(columns=["active", "start_time", "end_time", "status"], index=[])
+    def __init__(self, a_ignored_snapshot) -> None:
+        # 4 lists will also be fine for this, but the DataFrame
+        # has nice functions for making dicts, maybe that pays off.
+        # There is a question on how to handle None/NaNs together with the update/merges
+        # that are to happen.
+        self._realization_states = pd.DataFrame(
+            columns=["active", "start_time", "end_time", "status"], index=[]
+        )
 
         self._step_states = pd.DataFrame()
-        self._job_states = pd.DataFrame()
 
-        self._ensemble_state : str= state.ENSEMBLE_STATE_UNKNOWN
+        # the job_states is a multiindex dataframe with realization, step_id and job_id as indices.
+        self._job_states = pd.DataFrame(
+            columns=[
+                "status",
+                "index",
+                "start_time",
+                "end_time",
+                "error",
+                "name",
+                "stderr",
+                "stdout",
+                "data" + DICT_SEP + "memory",
+            ],
+            index=pd.MultiIndex(
+                levels=[[], [], []],
+                codes=[[], [], []],
+                names=["real_id", "step_id", "job_id"],
+            ),
+        )
+        # Additionally, a column called "data/something" will be added whenever a data-dictionary is added,
+        # containing e.g. memory information for the job. We flatten out that information for speed reasons.
+
+        # self._ensemble_state: str = state.ENSEMBLE_STATE_UNKNOWN
+        self._ensemble_state: Optional[str] = None
         self._metadata = {}
 
     @property
@@ -125,14 +189,17 @@ class PartialSnapshot:
 
     def update_metadata(self, metadata: Dict[str, Any]) -> None:
         self._metadata.update(metadata)
-        #if self._snapshot is None:
+        # todo: we don't' have the full snapshot in this object any longer, and the merge into
+        # that will have to be done later!
+
+        # if self._snapshot is None:
         #    raise UnsupportedOperationException(
         #        f"updating metadata on {self.__class__} without providing a snapshot"
         #        + " is not supported"
         #    )
-        #dictionary = pyrsistent.pmap({ids.METADATA: metadata})
-        #self._data = _recursive_update(self._data, dictionary, check_key=False)
-        #self._snapshot.merge_metadata(metadata)
+        # dictionary = pyrsistent.pmap({ids.METADATA: metadata})
+        # self._data = _recursive_update(self._data, dictionary, check_key=False)
+        # self._snapshot.merge_metadata(metadata)
 
     def update_realization(
         self,
@@ -142,25 +209,25 @@ class PartialSnapshot:
         start_time: datetime.datetime,
         end_time: datetime.datetime,
         steps_for_a_realization
-        #real: "RealizationSnapshot",
+        # real: "RealizationSnapshot",
     ) -> None:
         # This four ifs could be accomplished in one line with a dict.update() operation
         if status is not None:
-            self._realization_states[real_id, "status"] = status
+            self._realization_states.loc[real_id, "status"] = status
         if active is not None:
-            self._realization_states[real_id, "active"] = status
+            self._realization_states.loc[real_id, "active"] = active
         if start_time is not None:
-            self._realization_states[real_id, "start_time"] = status
+            self._realization_states.loc[real_id, "start_time"] = start_time
         if end_time is not None:
-            self._realization_states[real_id, "end_time"] = status
+            self._realization_states.loc[real_id, "end_time"] = end_time
 
         if steps_for_a_realization is not None:
-            STEP_ID = 0
+            STEP_ID = 0  # This is always 0 outside "ert3"
             self.update_step(real_id, STEP_ID, steps_for_a_realization)
 
-        #self._apply_update(SnapshotDict(reals={real_id: real}))
+        # self._apply_update(SnapshotDict(reals={real_id: real}))
 
-    #def _apply_update(self, update: "SnapshotDict") -> None:
+    # def _apply_update(self, update: "SnapshotDict") -> None:
     #    if self._snapshot is None:
     #        raise UnsupportedOperationException(
     #            f"trying to mutate {self.__class__} without providing a snapshot is "
@@ -173,13 +240,12 @@ class PartialSnapshot:
     #    self._data = _recursive_update(self._data, dictionary, check_key=False)
     #    self._snapshot.merge(dictionary)
 
-    def update_step(
-        self, real_id: int, step_id: int, step
-    ) -> "PartialSnapshot":
+    def update_step(self, real_id: int, step_id: int, step) -> "PartialSnapshot":
         print(f"ignoring step={step}")
+        # todo: see if we need to adhere to the transfer of step state onto realization state
         return self
-
         # Skipping the step for now
+
         # self._apply_update(
         #     SnapshotDict(reals={real_id: RealizationSnapshot(steps={step_id: step})})
         # )
@@ -218,9 +284,16 @@ class PartialSnapshot:
         job_id: str,
         job: "Job",
     ) -> "PartialSnapshot":
-        self._jobs[real_id, step_id] = self._jobs[real_id, step_id].to_dict().update(job)
+        job_idx = (real_id, step_id, job_id)
+        if job_idx in self._job_states.index:
+            job_as_dict = self._job_states.loc[job_idx].to_dict()
+            job_as_dict.update(_flatten_job_data(job.dict()))
+            self._job_states.loc[job_idx] = job_as_dict
+        else:
+            self._job_states.loc[job_idx] = _flatten_job_data(job.dict())
+
         return self
-        #self._apply_update(
+        # self._apply_update(
         #    SnapshotDict(
         #        reals={
         #            real_id: RealizationSnapshot(
@@ -228,17 +301,35 @@ class PartialSnapshot:
         #            )
         #        }
         #    )
-        #)
-        #return self
+        # )
+        # return self
 
     def to_dict(self) -> Mapping[str, Any]:
-        return {"metadata": self._metadata}
-        # Assemble everything..
+        _dict = {}
+        if self._metadata:
+            _dict["metadata"] = self._metadata
+        if self._ensemble_state:
+            _dict["status"] = self._ensemble_state
+        if not self._realization_states.empty:
+            _dict["reals"] = _filter_nones(
+                _fix_date_dtypes(self._realization_states.to_dict(orient="index"))
+            )
 
-        return cast(Mapping[str, Any], pyrsistent.thaw(self._data))
+        for job_idx, job_values in self._job_states.iterrows():
+            real_id = job_idx[0]
+            step_id = job_idx[1]
+            job_id = job_idx[2]
+            if "reals" not in _dict:
+                _dict["reals"] = {real_id: {}}
+            _dict["reals"][real_id]["steps"] = {step_id: {"jobs": {}}}
+            _dict["reals"][real_id]["steps"][step_id]["jobs"][job_id] = _filter_nones(
+                _fix_date_dtypes(_unflatten_job_data(job_values.to_dict()))
+            )
 
-    #def data(self) -> TPMap[str, Any]:
-    #    return self._data
+        return _dict
+
+    def data(self) -> Mapping[str, Any]:
+        return self.to_dict()
 
     # pylint: disable=too-many-branches
     def from_cloudevent(self, event: CloudEvent) -> "PartialSnapshot":
@@ -333,7 +424,7 @@ class PartialSnapshot:
         print(time.time() - start)
         return self
 
-import pprint
+
 class Snapshot:
     def __init__(self, input_dict: Mapping[str, Any]) -> None:
         self._data: TPMap[str, Any] = pyrsistent.freeze(input_dict)

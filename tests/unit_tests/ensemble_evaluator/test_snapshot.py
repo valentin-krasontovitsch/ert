@@ -29,7 +29,11 @@ def test_snapshot_merge(snapshot: Snapshot):
     assert snapshot.status == state.ENSEMBLE_STATE_STARTED
 
     update_event = PartialSnapshot(snapshot)
-    assert update_event.to_dict() == {}
+    update_event.update_status(status=state.ENSEMBLE_STATE_STARTED)
+
+    assert update_event.to_dict() == {"status": state.ENSEMBLE_STATE_STARTED}
+
+    update_event = PartialSnapshot(snapshot)
     update_event.update_job(
         real_id="0",
         step_id="0",
@@ -42,9 +46,14 @@ def test_snapshot_merge(snapshot: Snapshot):
             data={"memory": 1000},
         ),
     )
+    aa = update_event.to_dict()
+    import pprint
+
+    print("*" * 50)
+    pprint.pprint(aa)
     assert update_event.to_dict() == {
         "reals": {
-            "1": {
+            "0": {
                 "steps": {
                     "0": {
                         "jobs": {
