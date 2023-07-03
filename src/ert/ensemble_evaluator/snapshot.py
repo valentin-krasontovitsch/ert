@@ -143,7 +143,7 @@ def _filter_nones(some_dict: dict) -> dict:
 
 
 class PartialSnapshot:
-    def __init__(self, a_ignored_snapshot) -> None:
+    def __init__(self, snapshot) -> None:
         # 4 lists will also be fine for this, but the DataFrame
         # has nice functions for making dicts, maybe that pays off.
         # There is a question on how to handle None/NaNs together with the update/merges
@@ -179,6 +179,8 @@ class PartialSnapshot:
         # self._ensemble_state: str = state.ENSEMBLE_STATE_UNKNOWN
         self._ensemble_state: Optional[str] = None
         self._metadata = {}
+
+        self._snapshot = snapshot
 
     @property
     def status(self) -> str:
@@ -241,7 +243,7 @@ class PartialSnapshot:
     #    self._snapshot.merge(dictionary)
 
     def update_step(self, real_id: int, step_id: int, step) -> "PartialSnapshot":
-        print(f"ignoring step={step}")
+        #print(f"ignoring step={step}")
         # todo: see if we need to adhere to the transfer of step state onto realization state
         return self
         # Skipping the step for now
@@ -420,8 +422,8 @@ class PartialSnapshot:
             self._data = _recursive_update(self._data, event.data, check_key=False)
         else:
             raise ValueError(f"Unknown type: {e_type}")
-        print("from-cl took: ")
-        print(time.time() - start)
+        #print("from-cl took: ")
+        #print(time.time() - start)
         return self
 
 
@@ -430,30 +432,30 @@ class Snapshot:
         self._data: TPMap[str, Any] = pyrsistent.freeze(input_dict)
 
     def merge_event(self, event: PartialSnapshot) -> None:
-        print("MERGE EVENTV")
-        pprint.pprint(event.to_dict())
-        pprint.pprint(self.to_dict())
+        #print("MERGE EVENTV")
+        #pprint.pprint(event.to_dict())
+        #pprint.pprint(self.to_dict())
         self._data = _recursive_update(self._data, event.data())
         print(" **' 'after*** ")
-        pprint.pprint(self.to_dict())
+        #pprint.pprint(self.to_dict())
 
     def merge(self, update: Mapping[str, Any]) -> None:
-        print("MERGE *****'")
-        pprint.pprint(self.to_dict())
-        pprint.pprint(update)
+        #print("MERGE *****'")
+        #pprint.pprint(self.to_dict())
+        #pprint.pprint(update)
         self._data = _recursive_update(self._data, update)
         print(" **' 'after*** ")
-        pprint.pprint(self.to_dict())
+        #pprint.pprint(self.to_dict())
 
     def merge_metadata(self, metadata: Dict[str, Any]) -> None:
-        print("MERGE metadata *****'")
-        pprint.pprint(self.to_dict())
-        pprint.pprint(metadata)
+        #print("MERGE metadata *****'")
+        #pprint.pprint(self.to_dict())
+        #pprint.pprint(metadata)
         self._data = _recursive_update(
             self._data, pyrsistent.pmap({ids.METADATA: metadata}), check_key=False
         )
-        print(" **' 'after*** ")
-        pprint.pprint(self.to_dict())
+        #print(" **' 'after*** ")
+        #pprint.pprint(self.to_dict())
 
     def to_dict(self) -> Mapping[str, Any]:
         return cast(Mapping[str, Any], pyrsistent.thaw(self._data))
