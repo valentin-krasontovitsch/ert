@@ -138,29 +138,32 @@ def _filter_nones(some_dict: dict) -> dict:
 
 class PartialSnapshot:
     def __init__(self, snapshot: Optional["Snapshot"] = None) -> None:
-        self._realization_states = defaultdict(dict)
+        self._realization_states = {}# defaultdict(dict)
         # key is string with realization number, pointing to a dict with members
         # active, start_time, end_time and status
 
-        self._step_states = defaultdict(dict)
+        self._step_states = {}# defaultdict(dict)
         # key is stering with realization number, pointing to a dict with membrs
         # TODO check members! - active, start_time, end_time and status
 
-        self._job_states = defaultdict(dict)
+        self._job_states = {}# defaultdict(dict)
         # keys are tuples of (real, step, job). values are flattened dicts
 
         # self._ensemble_state: str = state.ENSEMBLE_STATE_UNKNOWN
         self._ensemble_state: Optional[str] = None
-        self._metadata = defaultdict(dict)
+        self._metadata = {}# defaultdict(dict)
 
         self._snapshot = snapshot
 
     @property
     def status(self) -> str:
         return self._ensemble_state
+    def update_status(self, status: str) -> None:
+        self._ensemble_state = status
 
     def update_metadata(self, metadata: Dict[str, Any]) -> None:
         self._metadata.update(_filter_nones(metadata))
+
 
     def _check_state_after_step_update(
         self, real_id: str, step_id: str
@@ -169,6 +172,8 @@ class PartialSnapshot:
         step_status = step["status"]
         if step_status == state.REALIZATION_STATE_FAILED:
             return self
+        if real_id not in self._realization_states:
+            self._realization_states[real_id] ={}
         if step_status in _STEP_STATE_TO_REALIZATION_STATE:
             self._realization_states[real_id].update({
                 "status" : _STEP_STATE_TO_REALIZATION_STATE[step_status]})
@@ -197,7 +202,7 @@ class PartialSnapshot:
             _dict["metadata"] = self._metadata
         if self._ensemble_state:
             _dict["status"] = self._ensemble_state
-        if not self._realization_states:
+        if self._realization_states:
             _dict["reals"] = self._realization_states
 
         for job_tuple, job_values_dict in self._job_states.items():
