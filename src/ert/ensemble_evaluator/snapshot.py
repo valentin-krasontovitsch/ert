@@ -127,11 +127,13 @@ def _unflatten_job_data(job_dict: dict) -> dict:
     unflattened_dict = {
         key: value for key, value in job_dict.items() if not key.startswith(key_prefix)
     }
-    unflattened_dict["data"] = data
+    if data:
+        unflattened_dict["data"] = data
     return unflattened_dict
 
 
 def _fix_date_dtypes(some_dict: dict) -> dict:
+    # REMOVE THIS WHEN PANDAS IS GONE
     for time_key in ["start_time", "end_time"]:
         if time_key in some_dict:
             some_dict[time_key] = some_dict[time_key].to_pydatetime()
@@ -145,7 +147,7 @@ def _filter_nones(some_dict: dict) -> dict:
 class PartialSnapshot:
     def __init__(self, snapshot) -> None:
         # 4 lists will also be fine for this, but the DataFrame
-        # has nice functions for making dicts, maybe that pays off.
+        # has nice functions for making dicts, maybe that pays off. IT DOES NOT
         # There is a question on how to handle None/NaNs together with the update/merges
         # that are to happen.
         self._realization_states = pd.DataFrame(
@@ -313,7 +315,6 @@ class PartialSnapshot:
         # return self
 
     def to_dict(self) -> Mapping[str, Any]:
-        print("to_dict")
         _dict = {}
         if self._metadata:
             _dict["metadata"] = self._metadata
@@ -323,16 +324,22 @@ class PartialSnapshot:
             _dict["reals"] = _filter_nones(
                 _fix_date_dtypes(self._realization_states.to_dict(orient="index"))
             )
-
-        for job_idx, job_values in self._job_states.iterrows():
-            real_id = job_idx[0]
-            step_id = job_idx[1]
-            job_id = job_idx[2]
+        for job_tuple, job_values in self._job_states.items():
             if "reals" not in _dict:
-                _dict["reals"] = {real_id: {}}
-            _dict["reals"][real_id]["steps"] = {step_id: {"jobs": {}}}
+                _dict["reals"] = {}
+            real_id = job_tuple[0]
+            if real_id not in _dict["reals"]:
+                _dict["reals"][real_id] = {}
+
+            if "steps" not in _dict["reals"][real_id]:
+                _dict["reals"][real_id]["steps"]=  {}
+            step_id = job_tuple[1]
+            if step_id not in _dict["reals"][real_id]["steps"]:
+                _dict["reals"][real_id]["steps"][step_id] = {"jobs": {}}
+
+            job_id = job_tuple[2]
             _dict["reals"][real_id]["steps"][step_id]["jobs"][job_id] = _filter_nones(
-                _fix_date_dtypes(_unflatten_job_data(job_values.to_dict()))
+                _unflatten_job_data(job_values)
             )
 
         return _dict
@@ -429,8 +436,6 @@ class PartialSnapshot:
             self._data = _recursive_update(self._data, event.data, check_key=False)
         else:
             raise ValueError(f"Unknown type: {e_type}")
-        #print("from-cl took: ")
-        #print(time.time() - start)
         return self
 
 
@@ -440,8 +445,8 @@ class Snapshot:
 
     def merge_event(self, event: PartialSnapshot) -> None:
         print("MERGE EVENTV")
-        #pprint.pprint(event.to_dict())
-        #pprint.pprint(self.to_dict())
+        pprint.pprint(event.to_dict())
+        pprint.pprint(self.to_dict())
         self._data = _recursive_update(self._data, event.data())
         print(" **' 'after*** ")
         #pprint.pprint(self.to_dict())

@@ -72,7 +72,7 @@ def test_snapshot_merge(snapshot: Snapshot):
     }
 
     update_event.update_job(
-        real_id="1",
+        real_id="0",
         step_id="0",
         job_id="1",
         job=Job(
@@ -81,9 +81,10 @@ def test_snapshot_merge(snapshot: Snapshot):
             start_time=datetime(year=2020, month=10, day=27),
         ),
     )
+    pprint.pprint(update_event.to_dict())
     assert update_event.to_dict() == {
         "reals": {
-            "1": {
+            "0": {
                 "steps": {
                     "0": {
                         "jobs": {
@@ -119,7 +120,7 @@ def test_snapshot_merge(snapshot: Snapshot):
     pprint.pprint(update_event.to_dict())
     assert update_event.to_dict() == {
         "reals": {
-            "1": {
+            "0": {
                 "steps": {
                     "0": {
                         "jobs": {
