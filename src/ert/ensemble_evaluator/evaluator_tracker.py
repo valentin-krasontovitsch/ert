@@ -187,7 +187,7 @@ class EvaluatorTracker:
                 # Empty ensemble or all realizations deactivated
                 return 1.0
             for real in all_reals.values():
-                if real.status in [
+                if real.get("status") in [
                     REALIZATION_STATE_FINISHED,
                     REALIZATION_STATE_FAILED,
                 ]:

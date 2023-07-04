@@ -364,8 +364,8 @@ class Snapshot:
 
     @property
     def reals(self) -> Dict[str, "RealizationSnapshot"]:
-        print("Do you really nead this?")
-        return SnapshotDict(**self._data).reals
+        print(self._my_partial._realization_states)
+        return self._my_partial._realization_states
 
     def get_real(self, real_id: str) -> "RealizationSnapshot":
         # get real yourself.
@@ -398,8 +398,8 @@ class Snapshot:
         return len(
             [
                 real
-                for real in self._data[ids.REALS].values()
-                if real[ids.STATUS] == state.REALIZATION_STATE_FINISHED
+                for real_idx, real_data in self._my_partial._realization_states.items()
+                if real_data[ids.STATUS] == state.REALIZATION_STATE_FINISHED
             ]
         )
 
@@ -526,11 +526,13 @@ def _from_old_super_nested_dict(data: Mapping[str, Any]) -> PartialSnapshot:
             "end_time": realization_data["end_time"],
         }
         step_data = realization_data["steps"]["0"]
-        partial._step_states[(real_id, "0")] = {
-            "status": step_data["status"],
-            "start_time": step_data["start_time"],
-            "end_time": step_data["end_time"],
-        }
+        partial._step_states[(real_id, "0")] = _filter_nones(
+            {
+                "status": step_data.get("status"),
+                "start_time": step_data.get("start_time"),
+                "end_time": step_data.get("end_time"),
+            }
+        )
         for job_id, job in step_data["jobs"].items():
             job_idx = (real_id, "0", job_id)
             partial._job_states[job_idx] = _flatten_job_data(job)
