@@ -138,20 +138,20 @@ def _filter_nones(some_dict: dict) -> dict:
 
 class PartialSnapshot:
     def __init__(self, snapshot: Optional["Snapshot"] = None) -> None:
-        self._realization_states = {}  # defaultdict(dict)
+        self._realization_states = defaultdict(dict)
         # key is string with realization number, pointing to a dict with members
         # active, start_time, end_time and status
 
-        self._step_states = {}  # defaultdict(dict)
+        self._step_states = defaultdict(dict)
         # key is stering with realization number, pointing to a dict with membrs
         # TODO check members! - active, start_time, end_time and status
 
-        self._job_states = {}  # defaultdict(dict)
+        self._job_states = defaultdict(dict)
         # keys are tuples of (real, step, job). values are flattened dicts
 
         # self._ensemble_state: str = state.ENSEMBLE_STATE_UNKNOWN
         self._ensemble_state: Optional[str] = None
-        self._metadata = {}  # defaultdict(dict)
+        self._metadata = defaultdict(dict)
 
         self._snapshot = snapshot
 
@@ -224,7 +224,7 @@ class PartialSnapshot:
         if self._ensemble_state:
             _dict["status"] = self._ensemble_state
         if self._realization_states:
-            _dict["reals"] = self._realization_states
+            _dict["reals"] = dict(self._realization_states)
 
         for job_tuple, job_values_dict in self._job_states.items():
             if "reals" not in _dict:
@@ -382,7 +382,10 @@ class Snapshot:
 
     @property
     def reals(self) -> Dict[str, "RealizationSnapshot"]:
-        return self._my_partial._realization_states
+        return {
+            real_id: RealizationSnapshot(**real_states)
+            for real_id, real_states in self._my_partial._realization_states.items()
+        }
 
     def get_real(self, real_id: str) -> "RealizationSnapshot":
         return RealizationSnapshot(**self._my_partial._realization_states[real_id])
@@ -411,12 +414,13 @@ class Snapshot:
 
     def aggregate_real_states(self) -> typing.Dict[str, int]:
         states: Dict[str, int] = defaultdict(int)
-        for real in self._data[ids.REALS].values():
+        for real in self._my_partial._realization_states.values():
             states[real[ids.STATUS]] += 1
         return states
 
     def data(self) -> Mapping[str, Any]:
-        return self._data
+        raise NotImplemented("who are you!?")
+        # return self._my_partial.to_dict()
 
 
 class Job(BaseModel):
@@ -524,7 +528,7 @@ def _from_old_super_nested_dict(data: Mapping[str, Any]) -> PartialSnapshot:
         partial._metadata = data["metadata"]
     if "status" in data:
         partial._ensemble_state = data["status"]
-    for real_id, realization_data in data["reals"].items():
+    for real_id, realization_data in data.get("reals", {}).items():
         partial._realization_states[real_id] = _filter_nones(
             {
                 "status": realization_data.get("status"),
