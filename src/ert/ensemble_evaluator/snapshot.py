@@ -1,14 +1,14 @@
-import time
 import collections
 import copy
-import pandas as pd
 import datetime
+import pprint
 import re
+import time
 import typing
 from collections import defaultdict
 from typing import Any, Dict, Mapping, Optional, Sequence, Union, cast
-import pprint
 
+import pandas as pd
 import pyrsistent
 from cloudevents.http import CloudEvent
 from dateutil.parser import parse
@@ -260,7 +260,8 @@ class PartialSnapshot:
             _dict["metadata"] = self._metadata
         if self._ensemble_state:
             _dict["status"] = self._ensemble_state
-        _dict["reals"] = self._realization_states if self._realization_states else {}
+        if self._realization_states:
+            _dict["reals"] = self._realization_states
 
         for step_index_tuple, step_state in self._step_states.items():
             real_id = step_index_tuple[0]
@@ -281,7 +282,6 @@ class PartialSnapshot:
             step_id = job_tuple[1]
             if step_id not in _dict["reals"][real_id]["steps"]:
                 _dict["reals"][real_id]["steps"][step_id] = {"jobs": {}}
-
 
             job_id = job_tuple[2]
             # TODO: _filter_nones might not be needed here. check later
@@ -452,7 +452,11 @@ class Snapshot:
         return Step(**self._my_partial._step_states[(real_id, step_id)])
 
     def get_job(self, real_id: str, step_id: str, job_id: str) -> "Job":
-        return Job(**_unflatten_job_data(self._my_partial._job_states[(real_id, step_id, job_id)]))
+        return Job(
+            **_unflatten_job_data(
+                self._my_partial._job_states[(real_id, step_id, job_id)]
+            )
+        )
 
     def all_steps_finished(self, real_id: str) -> bool:
         return all(
