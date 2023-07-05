@@ -260,12 +260,18 @@ class PartialSnapshot:
             _dict["metadata"] = self._metadata
         if self._ensemble_state:
             _dict["status"] = self._ensemble_state
-        if self._realization_states:
-            _dict["reals"] = dict(self._realization_states)
+        _dict["reals"] = self._realization_states if self._realization_states else {}
+
+        for step_index_tuple, step_state in self._step_states.items():
+            real_id = step_index_tuple[0]
+            step_id = step_index_tuple[1]
+            if "steps" not in _dict["reals"][real_id]:
+                _dict["reals"][real_id]["steps"] = {}
+            if step_id not in _dict["reals"][real_id]["steps"]:
+                _dict["reals"][real_id]["steps"][step_id] = step_state
+                _dict["reals"][real_id]["steps"][step_id]["jobs"] = {}
 
         for job_tuple, job_values_dict in self._job_states.items():
-            if "reals" not in _dict:
-                _dict["reals"] = {}
             real_id = job_tuple[0]
             if real_id not in _dict["reals"]:
                 _dict["reals"][real_id] = {}
@@ -275,6 +281,7 @@ class PartialSnapshot:
             step_id = job_tuple[1]
             if step_id not in _dict["reals"][real_id]["steps"]:
                 _dict["reals"][real_id]["steps"][step_id] = {"jobs": {}}
+
 
             job_id = job_tuple[2]
             # TODO: _filter_nones might not be needed here. check later
@@ -424,11 +431,18 @@ class Snapshot:
             for real_id, real_data in self._my_partial._realization_states.items()
         }
 
-    def steps(self, real_id: str) -> Dict[str, "RealizationSnapshot"]:
+    def steps(self, real_id: str) -> Dict[str, "Step"]:
         return {
             step_idx[1]: Step(**step_data)
             for step_idx, step_data in self._my_partial._step_states.items()
             if step_idx[0] == real_id
+        }
+
+    def jobs(self, real_id: str, step_id: str) -> Dict[str, "Job"]:
+        return {
+            job_idx[2]: Job(**job_data)
+            for job_idx, job_data in self._my_partial._job_states.items()
+            if job_idx[0] == real_id and job_idx[1] == step_id
         }
 
     def get_real(self, real_id: str) -> "RealizationSnapshot":
@@ -438,7 +452,7 @@ class Snapshot:
         return Step(**self._my_partial._step_states[(real_id, step_id)])
 
     def get_job(self, real_id: str, step_id: str, job_id: str) -> "Job":
-        return Job(**self._my_partial._job_states[(real_id, step_id, job_id)])
+        return Job(**_unflatten_job_data(self._my_partial._job_states[(real_id, step_id, job_id)]))
 
     def all_steps_finished(self, real_id: str) -> bool:
         return all(

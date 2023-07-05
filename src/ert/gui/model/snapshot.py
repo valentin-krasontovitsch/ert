@@ -118,7 +118,7 @@ class SnapshotModel(QAbstractItemModel):
                 metadata[SORTED_JOB_IDS][real_id] = {}
                 for step_id, step in snapshot.steps(real_id).items():
                     indices = [
-                        (job.index, job_id) for job_id, job in step[ids.JOBS].items()
+                        (job.index, job_id) for job_id, job in snapshot.jobs(real_id, step_id).items()
                     ]
                     metadata[SORTED_JOB_IDS][real_id][step_id] = [
                         index[1]
@@ -294,11 +294,12 @@ class SnapshotModel(QAbstractItemModel):
                 NodeType.REAL,
             )
             snapshot_tree.add_child(real_node)
-            for step_id, step in real[ids.STEPS].items():
-                step_node = Node(step_id, {ids.STATUS: step[ids.STATUS]}, NodeType.STEP)
+            for step_id, step in snapshot.steps(real_id).items():
+                step_node = Node(step_id, {ids.STATUS: step.status}, NodeType.STEP)
                 real_node.add_child(step_node)
                 for job_id in metadata[SORTED_JOB_IDS][real_id][step_id]:
-                    job = step[ids.JOBS][job_id]
+                    job = snapshot.get_job(real_id, step_id, job_id)
+                    # job = step[ids.JOBS][job_id]
                     job_dict = dict(job)
                     job_dict[ids.DATA] = job.data
                     job_node = Node(job_id, job_dict, NodeType.JOB)
