@@ -103,7 +103,6 @@ class SnapshotModel(QAbstractItemModel):
         # If there are no realizations, there's nothing to prerender.
         if not snapshot.data().get(ids.REALS):
             return None
-        print("PRERENDER      ********************************  ")
         metadata: Dict[str, Any] = {
             # A mapping from real to job to that job's QColor status representation
             REAL_JOB_STATUS_AGGREGATED: {},
@@ -115,9 +114,9 @@ class SnapshotModel(QAbstractItemModel):
                 snapshot.data()[ids.REALS].keys(), key=int
             )
             metadata[SORTED_JOB_IDS] = {}
-            for real_id, real in snapshot.data()[ids.REALS].items():
+            for real_id, real in snapshot.reals.items():
                 metadata[SORTED_JOB_IDS][real_id] = {}
-                for step_id, step in real[ids.STEPS].items():
+                for step_id, step in snapshot.steps(real_id).items():
                     indices = [
                         (job.index, job_id) for job_id, job in step[ids.JOBS].items()
                     ]

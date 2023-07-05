@@ -165,6 +165,19 @@ class PartialSnapshot:
     def update_metadata(self, metadata: Dict[str, Any]) -> None:
         self._metadata.update(_filter_nones(metadata))
 
+    def update_real(self, real_id: str, real: "RealizationSnapshot") -> None:
+        real_update = _filter_nones(
+            {
+                "status": real.status,
+                "active": real.active,
+                "start_time": real.start_time,
+                "end_time": real.end_time,
+            }
+        )
+        if real_id not in self._realization_states:
+            self._realization_states[real_id] = {}
+        self._realization_states[real_id].update(real_update)
+
     def update_step(
         self, real_id: str, step_id: str, step: "Step"
     ) -> "PartialSnapshot":
@@ -181,6 +194,30 @@ class PartialSnapshot:
             self._step_states[step_idx] = {}
         self._step_states[step_idx].update(step_update)
         self._check_state_after_step_update(step_idx[0], step_idx[1])
+        return self
+
+    def update_job(
+        self, real_id: str, step_id: str, job_id: str, job: "Job"
+    ) -> "PartialSnapshot":
+        job_idx = (real_id, step_id, job_id)
+        if job_idx not in self._job_states:
+            self._job_states[job_idx] = {}
+        self._job_states[job_idx].update(
+            _flatten_job_data(
+                _filter_nones(
+                    {
+                        "status": job.status,
+                        "start_time": job.start_time,
+                        "end_time": job.end_time,
+                        "index": job.index,
+                        "data": job.data,
+                        "error": job.error,
+                        "stdout": job.stdout,
+                        "stderr": job.stderr,
+                    }
+                )
+            )
+        )
         return self
 
     def _check_state_after_step_update(
@@ -383,8 +420,15 @@ class Snapshot:
     @property
     def reals(self) -> Dict[str, "RealizationSnapshot"]:
         return {
-            real_id: RealizationSnapshot(**real_states)
-            for real_id, real_states in self._my_partial._realization_states.items()
+            real_id: RealizationSnapshot(**real_data)
+            for real_id, real_data in self._my_partial._realization_states.items()
+        }
+
+    def steps(self, real_id: str) -> Dict[str, "RealizationSnapshot"]:
+        return {
+            step_idx[1]: Step(**step_data)
+            for step_idx, step_data in self._my_partial._step_states.items()
+            if step_idx[0] == real_id
         }
 
     def get_real(self, real_id: str) -> "RealizationSnapshot":
@@ -419,8 +463,8 @@ class Snapshot:
         return states
 
     def data(self) -> Mapping[str, Any]:
-        raise NotImplemented("who are you!?")
-        # return self._my_partial.to_dict()
+        # The gui uses this
+        return self._my_partial.to_dict()
 
 
 class Job(BaseModel):
