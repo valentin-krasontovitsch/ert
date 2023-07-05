@@ -305,6 +305,7 @@ class PartialSnapshot:
 
     # pylint: disable=too-many-branches
     def from_cloudevent(self, event: CloudEvent) -> "PartialSnapshot":
+        # pylint: disable=too-many-statements   # TODO: fix this before merge
         e_type = event["type"]
         e_source = event["source"]
         status = _FM_TYPE_EVENT_TO_STATUS.get(e_type)

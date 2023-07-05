@@ -147,7 +147,7 @@ class SnapshotModel(QAbstractItemModel):
             snapshot.update_metadata(metadata)
         return snapshot
 
-    # pylint: disable=too-many-branches
+    # pylint: disable=too-many-branches, too-many-statements
     def _add_partial_snapshot(self, partial: PartialSnapshot, iter_: int):
         metadata = partial.data().get(ids.METADATA)
         if not metadata:
