@@ -274,6 +274,8 @@ class PartialSnapshot:
 
         for job_tuple, job_values_dict in self._job_states.items():
             real_id = job_tuple[0]
+            if "reals" not in _dict:
+                _dict["reals"] = {}
             if real_id not in _dict["reals"]:
                 _dict["reals"][real_id] = {}
 
