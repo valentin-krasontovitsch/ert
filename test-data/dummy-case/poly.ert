@@ -1,7 +1,8 @@
 
-QUEUE_SYSTEM LSF
+QUEUE_SYSTEM LOCAL
+QUEUE_OPTION LOCAL MAX_RUNNING 300
 
-RUNPATH /scratch/johan_sverdrup/vkra/big_poly_test/realization-<IENS>/iter-<ITER>
+RUNPATH output/realization-<IENS>/iter-<ITER>
 
 NUM_REALIZATIONS 200
 MIN_REALIZATIONS 1
