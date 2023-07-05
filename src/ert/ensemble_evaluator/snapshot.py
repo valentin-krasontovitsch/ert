@@ -1,15 +1,10 @@
 import collections
-import copy
 import datetime
-import pprint
 import re
-import time
 import typing
 from collections import defaultdict
-from typing import Any, Dict, Mapping, Optional, Sequence, Union, cast
+from typing import Any, Dict, Mapping, Optional, Sequence, Union
 
-import pandas as pd
-import pyrsistent
 from cloudevents.http import CloudEvent
 from dateutil.parser import parse
 from pydantic import BaseModel
@@ -358,7 +353,8 @@ class PartialSnapshot:
                         self._job_states[job_idx].update(
                             {
                                 "status": state.JOB_STATE_FAILURE,
-                                "error": "The run is cancelled due to reaching MAX_RUNTIME",
+                                "error": "The run is cancelled due to "
+                                "reaching MAX_RUNTIME",
                             }
                         )
 
@@ -403,12 +399,9 @@ class PartialSnapshot:
 
 class Snapshot:
     def __init__(self, input_dict: Mapping[str, Any]) -> None:
-        # We use a partial because it is able to make the input flattened:
         self._my_partial = _from_old_super_nested_dict(input_dict)
 
     def merge_event(self, event: PartialSnapshot) -> None:
-        """Merge a partialsnapshot, which is really a way of representing multiple events,
-        not necesseraly a single event as the function name implies"""
         self._my_partial._recursive_merge(event)
 
     def merge(self, update_as_nested_dict: Mapping[str, Any]) -> None:

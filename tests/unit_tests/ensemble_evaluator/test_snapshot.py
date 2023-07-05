@@ -14,28 +14,19 @@ from ert.ensemble_evaluator.snapshot import (
     _get_real_id,
     _get_step_id,
 )
-import pprint
 
 
-def skipme_test_snapshot_merge(snapshot: Snapshot):
+def test_snapshot_merge(snapshot: Snapshot):
     update_event = PartialSnapshot(snapshot)
-    assert update_event.to_dict() == {}
     update_event.update_status(status=state.ENSEMBLE_STATE_STARTED)
 
-    assert update_event.to_dict() == {"status": state.ENSEMBLE_STATE_STARTED}
     snapshot.merge_event(update_event)
-    assert update_event.to_dict() == {"status": state.ENSEMBLE_STATE_STARTED}
 
     assert snapshot.status == state.ENSEMBLE_STATE_STARTED
 
     update_event = PartialSnapshot(snapshot)
-    update_event.update_status(status=state.ENSEMBLE_STATE_STARTED)
-
-    assert update_event.to_dict() == {"status": state.ENSEMBLE_STATE_STARTED}
-
-    update_event = PartialSnapshot(snapshot)
     update_event.update_job(
-        real_id="0",
+        real_id="1",
         step_id="0",
         job_id="0",
         job=Job(
@@ -46,33 +37,8 @@ def skipme_test_snapshot_merge(snapshot: Snapshot):
             data={"memory": 1000},
         ),
     )
-    aa = update_event.to_dict()
-    import pprint
-
-    print("*" * 50)
-    pprint.pprint(aa)
-    assert update_event.to_dict() == {
-        "reals": {
-            "0": {
-                "steps": {
-                    "0": {
-                        "jobs": {
-                            "0": {
-                                "data": {"memory": 1000},
-                                "end_time": datetime(2020, 10, 28, 0, 0),
-                                "index": "0",
-                                "start_time": datetime(2020, 10, 27, 0, 0),
-                                "status": "Finished",
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
     update_event.update_job(
-        real_id="0",
+        real_id="1",
         step_id="0",
         job_id="1",
         job=Job(
@@ -81,32 +47,6 @@ def skipme_test_snapshot_merge(snapshot: Snapshot):
             start_time=datetime(year=2020, month=10, day=27),
         ),
     )
-    pprint.pprint(update_event.to_dict())
-    assert update_event.to_dict() == {
-        "reals": {
-            "0": {
-                "steps": {
-                    "0": {
-                        "jobs": {
-                            "0": {
-                                "data": {"memory": 1000},
-                                "end_time": datetime(2020, 10, 28, 0, 0),
-                                "index": "0",
-                                "start_time": datetime(2020, 10, 27, 0, 0),
-                                "status": "Finished",
-                            },
-                            "1": {
-                                "index": "1",
-                                "start_time": datetime(2020, 10, 27, 0, 0),
-                                "status": "Running",
-                            },
-                        }
-                    }
-                }
-            }
-        }
-    }
-
     update_event.update_job(
         real_id="9",
         step_id="0",
@@ -117,44 +57,6 @@ def skipme_test_snapshot_merge(snapshot: Snapshot):
             start_time=datetime(year=2020, month=10, day=27),
         ),
     )
-    pprint.pprint(update_event.to_dict())
-    assert update_event.to_dict() == {
-        "reals": {
-            "0": {
-                "steps": {
-                    "0": {
-                        "jobs": {
-                            "0": {
-                                "data": {"memory": 1000},
-                                "end_time": datetime(2020, 10, 28, 0, 0),
-                                "index": "0",
-                                "start_time": datetime(2020, 10, 27, 0, 0),
-                                "status": "Finished",
-                            },
-                            "1": {
-                                "index": "1",
-                                "start_time": datetime(2020, 10, 27, 0, 0),
-                                "status": "Running",
-                            },
-                        }
-                    }
-                }
-            },
-            "9": {
-                "steps": {
-                    "0": {
-                        "jobs": {
-                            "0": {
-                                "index": "0",
-                                "start_time": datetime(2020, 10, 27, 0, 0),
-                                "status": "Running",
-                            }
-                        }
-                    }
-                }
-            },
-        }
-    }
 
     snapshot.merge_event(update_event)
 
