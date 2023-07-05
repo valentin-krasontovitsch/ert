@@ -118,7 +118,8 @@ class SnapshotModel(QAbstractItemModel):
                 metadata[SORTED_JOB_IDS][real_id] = {}
                 for step_id, step in snapshot.steps(real_id).items():
                     indices = [
-                        (job.index, job_id) for job_id, job in snapshot.jobs(real_id, step_id).items()
+                        (job.index, job_id)
+                        for job_id, job in snapshot.jobs(real_id, step_id).items()
                     ]
                     metadata[SORTED_JOB_IDS][real_id][step_id] = [
                         index[1]
@@ -244,8 +245,8 @@ class SnapshotModel(QAbstractItemModel):
 
                         for attr in (ids.CURRENT_MEMORY_USAGE, ids.MAX_MEMORY_USAGE):
                             if job.get(ids.DATA) and attr in job.get(ids.DATA):
-                                job_node.data[ids.DATA] = job_node.data[ids.DATA].set(
-                                    attr, job.get(ids.DATA).get(attr)
+                                job_node.data[ids.DATA][attr] = job.get(ids.DATA).get(
+                                    attr
                                 )
 
                     if jobs_changed:
