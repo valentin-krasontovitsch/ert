@@ -165,6 +165,24 @@ class PartialSnapshot:
     def update_metadata(self, metadata: Dict[str, Any]) -> None:
         self._metadata.update(_filter_nones(metadata))
 
+    def update_step(
+        self, real_id: str, step_id: str, step: "Step"
+    ) -> "PartialSnapshot":
+        # Code duplication from from_cloudevent
+        step_idx = (real_id, step_id)
+        step_update = _filter_nones(
+            {
+                "status": step.status,
+                "start_time": step.start_time,
+                "end_time": step.end_time,
+            }
+        )
+        if step_idx not in self._step_states:
+            self._step_states[step_idx] = {}
+        self._step_states[step_idx].update(step_update)
+        self._check_state_after_step_update(step_idx[0], step_idx[1])
+        return self
+
     def _check_state_after_step_update(
         self, real_id: str, step_id: str
     ) -> "PartialSnapshot":
@@ -364,28 +382,16 @@ class Snapshot:
 
     @property
     def reals(self) -> Dict[str, "RealizationSnapshot"]:
-        print(self._my_partial._realization_states)
         return self._my_partial._realization_states
 
     def get_real(self, real_id: str) -> "RealizationSnapshot":
-        # get real yourself.
-        if real_id not in self._data[ids.REALS]:
-            raise ValueError(f"No realization with id {real_id}")
-        return RealizationSnapshot(**self._data[ids.REALS][real_id])
+        return RealizationSnapshot(**self._my_partial._realization_states[real_id])
 
     def get_step(self, real_id: str, step_id: str) -> "Step":
-        real = self.get_real(real_id)
-        steps = real.steps
-        if step_id not in steps:
-            raise ValueError(f"No step with id {step_id} in {real_id}")
-        return steps[step_id]
+        return Step(**self._my_partial._step_states[(real_id, step_id)])
 
     def get_job(self, real_id: str, step_id: str, job_id: str) -> "Job":
-        step = self.get_step(real_id, step_id)
-        jobs = step.jobs
-        if job_id not in jobs:
-            raise ValueError(f"No job with id {job_id} in {step_id}")
-        return jobs[job_id]
+        return Job(**self._my_partial._job_states[(real_id, step_id, job_id)])
 
     def all_steps_finished(self, real_id: str) -> bool:
         return all(
@@ -397,7 +403,7 @@ class Snapshot:
     def get_successful_realizations(self) -> int:
         return len(
             [
-                real
+                real_idx
                 for real_idx, real_data in self._my_partial._realization_states.items()
                 if real_data[ids.STATUS] == state.REALIZATION_STATE_FINISHED
             ]
@@ -519,22 +525,25 @@ def _from_old_super_nested_dict(data: Mapping[str, Any]) -> PartialSnapshot:
     if "status" in data:
         partial._ensemble_state = data["status"]
     for real_id, realization_data in data["reals"].items():
-        partial._realization_states[real_id] = {
-            "status": realization_data["status"],
-            "active": realization_data["active"],
-            "start_time": realization_data["start_time"],
-            "end_time": realization_data["end_time"],
-        }
-        step_data = realization_data["steps"]["0"]
-        partial._step_states[(real_id, "0")] = _filter_nones(
+        partial._realization_states[real_id] = _filter_nones(
             {
-                "status": step_data.get("status"),
-                "start_time": step_data.get("start_time"),
-                "end_time": step_data.get("end_time"),
+                "status": realization_data.get("status"),
+                "active": realization_data.get("active"),
+                "start_time": realization_data.get("start_time"),
+                "end_time": realization_data.get("end_time"),
             }
         )
-        for job_id, job in step_data["jobs"].items():
-            job_idx = (real_id, "0", job_id)
-            partial._job_states[job_idx] = _flatten_job_data(job)
+        for step_id, step_data in data["reals"][real_id].get("steps", {}).items():
+            step_data = realization_data["steps"][step_id]
+            partial._step_states[(real_id, step_id)] = _filter_nones(
+                {
+                    "status": step_data.get("status"),
+                    "start_time": step_data.get("start_time"),
+                    "end_time": step_data.get("end_time"),
+                }
+            )
+            for job_id, job in step_data.get("jobs", {}).items():
+                job_idx = (real_id, step_id, job_id)
+                partial._job_states[job_idx] = _flatten_job_data(job)
 
     return partial
