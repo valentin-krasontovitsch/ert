@@ -190,8 +190,8 @@ def test_prefect_no_retries(
                 event_list.append(event)
                 wait_until_done(mon, event)
         # Find if job and step failed
-        step_failed = False
-        job_failed = False
+        # step_failed = False
+        # job_failed = False
         # for real in ensemble.snapshot.reals.values():
         #     for step in real.steps.values():
         #         for job in step.jobs.values():
