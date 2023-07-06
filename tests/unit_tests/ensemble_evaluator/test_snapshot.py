@@ -190,3 +190,28 @@ def test_multiple_cloud_events_trigger_non_communicated_change():
         )
     )
     assert partial.to_dict()["reals"]["0"]["status"] == state.REALIZATION_STATE_FINISHED
+
+
+def test_update_metadata_should_support_nesting():
+    partial = PartialSnapshot(Snapshot({}))
+    partial.update_metadata({"layer1-idx1": {"layer2-idx1": "firstvalue"}})
+    assert partial.metadata["layer1-idx1"]["layer2-idx1"] == "firstvalue"
+
+    partial.update_metadata({"layer1-idx1": {"layer2-idx2": "secondvalue"}})
+    assert partial.metadata["layer1-idx1"]["layer2-idx1"] == "firstvalue"
+    assert partial.metadata["layer1-idx1"]["layer2-idx2"] == "secondvalue"
+
+    partial.update_metadata(
+        {"layer1-idx1": {"layer2-idx3": {"layer3-idx1": "leaf-value"}}}
+    )
+    assert partial.metadata["layer1-idx1"]["layer2-idx1"] == "firstvalue"
+    assert partial.metadata["layer1-idx1"]["layer2-idx2"] == "secondvalue"
+    assert partial.metadata["layer1-idx1"]["layer2-idx3"]["layer3-idx1"] == "leaf-value"
+
+    # Nones are ignored:
+    partial.update_metadata({"layer1-idx1": {"layer2-idx3": {"layer3-idx1": None}}})
+    assert partial.metadata["layer1-idx1"]["layer2-idx3"]["layer3-idx1"] == "leaf-value"
+
+    # Empty dicts will overwrite:
+    partial.update_metadata({"layer1-idx1": {"layer2-idx3": {"layer3-idx1": {}}}})
+    assert partial.metadata["layer1-idx1"]["layer2-idx3"]["layer3-idx1"] == {}

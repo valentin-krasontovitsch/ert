@@ -36,6 +36,9 @@ if TYPE_CHECKING:
     from ert.run_models import BaseRunModel
 
 
+logger = logging.getLogger(__name__)
+
+
 class OutOfOrderSnapshotUpdateException(ValueError):
     pass
 
@@ -135,6 +138,8 @@ class EvaluatorTracker:
                 self._work_queue.task_done()
                 break
             if event["type"] == EVTYPE_EE_SNAPSHOT:
+                # logger.debug("tracker got snapshot")
+                # logger.debug(f"{event.data=}")
                 iter_ = event.data["iter"]
                 snapshot = Snapshot(event.data)
                 self._iter_snapshot[iter_] = snapshot
@@ -148,16 +153,20 @@ class EvaluatorTracker:
                     snapshot=copy.deepcopy(snapshot),
                 )
             elif event["type"] == EVTYPE_EE_SNAPSHOT_UPDATE:
-                iter_ = event.data["iter"]
+                logger.debug("tracker got snapshot update")
+                logger.debug(f"{event.data=}")
+                iter = event.data["iter"]
                 if iter_ not in self._iter_snapshot:
                     raise OutOfOrderSnapshotUpdateException(
                         f"got {EVTYPE_EE_SNAPSHOT_UPDATE} without having stored "
                         f"snapshot for iter {iter_}"
                     )
+                logger.debug(f"{event=} for {iter_} in evaluator_tracker")
                 partial = PartialSnapshot(self._iter_snapshot[iter_]).from_cloudevent(
                     event
                 )
                 self._iter_snapshot[iter_].merge_event(partial)
+                logger.debug(f"{self._iter_snapshot[iter_]=}")
                 yield SnapshotUpdateEvent(
                     phase_name=self._model.getPhaseName(),
                     current_phase=self._model.currentPhase(),

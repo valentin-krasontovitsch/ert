@@ -1,40 +1,21 @@
-import collections
+import copy
 import datetime
+import logging
 import re
 import typing
 from collections import defaultdict
-from typing import Any, Dict, Mapping, Optional, Sequence, Union
+from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple, Union
 
 from cloudevents.http import CloudEvent
 from dateutil.parser import parse
 from pydantic import BaseModel
-from pyrsistent import freeze
-from pyrsistent.typing import PMap as TPMap
 
 from ert.ensemble_evaluator import identifiers as ids
 from ert.ensemble_evaluator import state
 
-
-def _recursive_update(
-    left: TPMap[str, Any],
-    right: Union[Mapping[str, Any], TPMap[str, Any]],
-    check_key: bool = True,
-) -> TPMap[str, Any]:
-    for k, v in right.items():
-        if check_key and k not in left:
-            raise ValueError(f"Illegal field {k}")
-        if isinstance(v, collections.abc.Mapping):
-            d_val = left.get(k)
-            if not d_val:
-                left = left.set(k, freeze(v))
-            else:
-                left = left.set(k, _recursive_update(d_val, v, check_key))
-        else:
-            left = left.set(k, v)
-    return left
-
-
 _regexp_pattern = r"(?<=/{token}/)[^/]+"
+
+logger = logging.getLogger(__name__)
 
 
 def _match_token(token: str, source: str) -> str:
@@ -129,19 +110,48 @@ class PartialSnapshot:
         self._ensemble_state: Optional[str] = None
         self._metadata = defaultdict(dict)
 
-        self._snapshot = snapshot
+        self._snapshot = copy.copy(snapshot)
 
     @property
     def status(self) -> str:
         return self._ensemble_state
 
+    @property
+    def metadata(self) -> Dict[str, Any]:
+        return self._metadata  # Should we return a copy or not?
+
+    @property
+    def real_keys(self) -> List[str]:
+        return self._realization_states.keys()
+
+    @property
+    def reals(self) -> Dict[str, "RealizationSnapshot"]:
+        return {
+            real_id: RealizationSnapshot(**real_data)
+            for real_id, real_data in self._realization_states.items()
+        }
+
+    @property
+    def all_jobs(self) -> Dict[Tuple[str, str, str], "Job"]:
+        return {job_idx: Job(**job) for job_idx, job in self._job_states.items()}
+
+    def get_real(self, real_id: str) -> "RealizationSnapshot":
+        return RealizationSnapshot(**self._realization_states[real_id])
+
     def update_status(self, status: str) -> None:
         self._ensemble_state = status
         self._snapshot._my_partial._ensemble_state = status
 
-    def update_metadata(self, metadata: Dict[str, Any]) -> None:
-        self._metadata.update(_filter_nones(metadata))
-        self._snapshot._my_partial._metadata.update(_filter_nones(metadata))
+    def update_metadata(self, updated_metadata: Dict[str, Any]) -> None:
+        def _recursive_update(base, update):
+            for key, value in update.items():
+                if isinstance(value, dict) and value:
+                    base[key] = _recursive_update(base.get(key, {}), value)
+                elif value is not None:
+                    base[key] = value
+            return base
+
+        self._metadata = _recursive_update(self._metadata, updated_metadata)
 
     def update_real(self, real_id: str, real: "RealizationSnapshot") -> None:
         real_update = _filter_nones(
@@ -258,7 +268,9 @@ class PartialSnapshot:
         return _dict
 
     def data(self) -> Mapping[str, Any]:
-        return self.to_dict()
+        return (
+            self.to_dict()
+        )  # There are some indications that this should give out the snapshots to_dict() ?
 
     def _recursive_merge(self, other: "PartialSnapshot") -> "PartialSnapshot":
         self._metadata.update(other._metadata)
@@ -384,7 +396,7 @@ class Snapshot:
         )
 
     def merge_metadata(self, metadata: Dict[str, Any]) -> None:
-        self._my_partial._metadata.update(metadata)
+        self._my_partial.update_metadata(metadata)
 
     def to_dict(self) -> Mapping[str, Any]:
         return self._my_partial.to_dict()
@@ -394,11 +406,26 @@ class Snapshot:
         return self._my_partial._ensemble_state
 
     @property
+    def metadata(self) -> Dict[str, Any]:
+        return self._my_partial._metadata
+
+    @property
+    def real_keys(self) -> List[str]:
+        return self._my_partial._realization_states.keys()
+
+    @property
     def reals(self) -> Dict[str, "RealizationSnapshot"]:
         return {
             real_id: RealizationSnapshot(**real_data)
             for real_id, real_data in self._my_partial._realization_states.items()
         }
+
+    def step_keys(self, real_id: str) -> List[str]:
+        return [
+            step_idx[1]
+            for step_idx in self._my_partial._step_states.keys()
+            if step_idx[0] == real_id
+        ]
 
     def steps(self, real_id: str) -> Dict[str, "Step"]:
         return {
@@ -406,6 +433,20 @@ class Snapshot:
             for step_idx, step_data in self._my_partial._step_states.items()
             if step_idx[0] == real_id
         }
+
+    def job_keys(self, real_id: str, step_id: str) -> List[str]:
+        """job id's' are sorted by job.index. This causes
+        a performance penalty"""
+        keys = [
+            job_idx[2]
+            for job_idx in self._my_partial._job_states.keys()
+            if job_idx[0] == real_id and job_idx[1] == step_id
+        ]
+        return sorted(keys, key=int)
+
+    @property
+    def all_jobs(self) -> Dict[Tuple[str, str, str], "Job"]:
+        self._my_partial.all_jobs
 
     def jobs(self, real_id: str, step_id: str) -> Dict[str, "Job"]:
         return {
