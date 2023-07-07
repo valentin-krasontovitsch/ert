@@ -8,6 +8,7 @@ NUM_REALIZATIONS 200
 MIN_REALIZATIONS 1
 
 
+INSTALL_JOB fail_maybe FAIL_MAYBE
 
 FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
 FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
@@ -29,6 +30,7 @@ FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-d
 FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
 FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
 FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
+FORWARD_MODEL fail_maybe()
 FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
 FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)
 FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/dummy-file,<TO>=<RUNPATH>/copy-of-dummy-file)

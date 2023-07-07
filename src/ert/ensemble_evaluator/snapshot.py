@@ -362,6 +362,8 @@ class PartialSnapshot:
         elif e_type in ids.EVGROUP_FM_JOB:
             start_time = None
             end_time = None
+            if e_type == ids.EVTYPE_FM_JOB_FAILURE:
+                raise RuntimeError("Ajhhhhh")
             if e_type == ids.EVTYPE_FM_JOB_START:
                 start_time = convert_iso8601_to_datetime(timestamp)
             elif e_type in {ids.EVTYPE_FM_JOB_SUCCESS, ids.EVTYPE_FM_JOB_FAILURE}:
