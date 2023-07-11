@@ -43,6 +43,7 @@ _TOTAL_PROGRESS_TEMPLATE = "Total progress {total_progress}% — {phase_name}"
 
 logger = logging.getLogger(__name__)
 
+
 class RunDialog(QDialog):
     simulation_done = Signal(bool, str)
 
@@ -346,10 +347,16 @@ class RunDialog(QDialog):
         elif isinstance(event, SnapshotUpdateEvent):
             if event.partial_snapshot is not None:
                 import pprint
+
                 logger.info("partial snapshot in run_dialog")
                 logger.info(f"{event.partial_snapshot=}")
-                logger.info(f"p_snap.meta: {pprint.pformat(event.partial_snapshot.metadata}")
-                logger.info(f"p_snap.real_states: {pprint.pformat(event.partial_snapshot._realization_states}")
+                logger.info(
+                    "p_snap.meta: " f"{pprint.pformat(event.partial_snapshot.metadata)}"
+                )
+                logger.info(
+                    "p_snap.real_states: "
+                    f"{pprint.pformat(event.partial_snapshot._realization_states)}"
+                )
 
                 self._snapshot_model._add_partial_snapshot(
                     event.partial_snapshot, event.iteration
