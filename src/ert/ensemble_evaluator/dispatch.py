@@ -86,10 +86,7 @@ class BatchingDispatcher:
 
     async def join(self):
         self._running = False
-        with contextlib.suppress(BaseException):
-            await self._task
-            # if result is exception it should have been handled by
-            # done-handler, but also avoid killing the caller here
+        await self._task
 
     def register_event_handler(self, event_types, function, batching=True):
         if not isinstance(event_types, set):
