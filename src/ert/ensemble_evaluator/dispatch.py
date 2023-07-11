@@ -27,10 +27,12 @@ class BatchingDispatcher:
         try:
             failure = self._task.exception()
             if failure is not None:
-                logger.warning("exception in batcher: {failure}")
+                logger.warning(f"exception in batcher: {failure}")
                 traceback.print_exception(failure)
-                logger.warning(traceback.format_exception(failure))
-                logger.warning("".join(traceback.format_exception(failure)))
+                trace_info = traceback.format_exception(failure)
+                print(f"{len(trace_info)=}")
+                logger.warning(f"{trace_info=}")
+                logger.warning("".join(trace_info))
                 raise failure
             else:
                 logger.debug("batcher finished normally")
