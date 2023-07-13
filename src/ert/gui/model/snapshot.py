@@ -124,17 +124,22 @@ class SnapshotModel(QAbstractItemModel):
 
         logger.debug("looping over reals")
         for real_id, real in snapshot.reals.items():
-            # todo: avoid dict(real)
-            if dict(real)[ids.STATUS] is not None:
+            if real.status is not None:
                 metadata[REAL_STATUS_COLOR][real_id] = _QCOLORS[
-                    state.REAL_STATE_TO_COLOR[dict(real)[ids.STATUS]]
+                    state.REAL_STATE_TO_COLOR[real.status]
                 ]
             metadata[REAL_JOB_STATUS_AGGREGATED][real_id] = {}
+        try:
+            stuff = snapshot.all_jobs.items()
+        except AttributeError as e:
+            breakpoint()
         for job_index, job in snapshot.all_jobs.items():
             # logger.debug(f"{job_index=} now has state {dict(job)[ids.STATUS]}")
+            print(job)
+            print(type(job))
+            print(dir(job))
             metadata[REAL_JOB_STATUS_AGGREGATED][job_index[0]][job_index[2]] = _QCOLORS[
-                # todo: avoid dict(job)
-                state.JOB_STATE_TO_COLOR[dict(job)[ids.STATUS]]
+                state.JOB_STATE_TO_COLOR[job.status]
             ]
 
         # import pprint

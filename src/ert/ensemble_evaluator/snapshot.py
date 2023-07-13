@@ -17,6 +17,7 @@ _regexp_pattern = r"(?<=/{token}/)[^/]+"
 
 logger = logging.getLogger(__name__)
 
+
 def _match_token(token: str, source: str) -> str:
     f_pattern = _regexp_pattern.format(token=token)
     match = re.search(f_pattern, source)
@@ -132,7 +133,7 @@ class PartialSnapshot:
 
     @property
     def all_jobs(self) -> Dict[Tuple[str, str, str], "Job"]:
-        return self._job_states
+        return {job_idx: Job(**job) for job_idx, job in self._job_states.items()}
 
     def get_real(self, real_id: str) -> "RealizationSnapshot":
         return RealizationSnapshot(**self._realization_states[real_id])
@@ -267,7 +268,9 @@ class PartialSnapshot:
         return _dict
 
     def data(self) -> Mapping[str, Any]:
-        return self.to_dict()  # There are some indications that this should give out the snapshots to_dict() ?
+        return (
+            self.to_dict()
+        )  # There are some indications that this should give out the snapshots to_dict() ?
 
     def _recursive_merge(self, other: "PartialSnapshot") -> "PartialSnapshot":
         self._metadata.update(other._metadata)
@@ -443,7 +446,7 @@ class Snapshot:
 
     @property
     def all_jobs(self) -> Dict[Tuple[str, str, str], "Job"]:
-        return self._my_partial._job_states
+        self._my_partial.all_jobs
 
     def jobs(self, real_id: str, step_id: str) -> Dict[str, "Job"]:
         return {
