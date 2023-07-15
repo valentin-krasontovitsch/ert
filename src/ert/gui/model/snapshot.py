@@ -1,5 +1,6 @@
 import datetime
 import logging
+import pprint
 from contextlib import ExitStack
 from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 
@@ -130,9 +131,11 @@ class SnapshotModel(QAbstractItemModel):
                 ]
             metadata[REAL_JOB_STATUS_AGGREGATED][real_id] = {}
         try:
-            stuff = snapshot.all_jobs.items()
+            snapshot.all_jobs.items()
         except AttributeError as e:
-            breakpoint()
+            print(f"got exception {e}...")
+            print("... snapshot.data():\n" f"{pprint.pformat(snapshot.data())}")
+            raise e
         for job_index, job in snapshot.all_jobs.items():
             # logger.debug(f"{job_index=} now has state {dict(job)[ids.STATUS]}")
             print(job)
