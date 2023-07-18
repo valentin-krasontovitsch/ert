@@ -95,10 +95,7 @@ class BatchingDispatcher:  # pylint: disable=too-many-instance-attributes
 
     async def _job(self):
         while self._running:
-            if len(self._buffer) == 0:
-                time.sleep(self._timeout)
-            else:
-                time.sleep(0)
+            time.sleep(self._timeout)
             await self._work()
         # Make sure no events are lingering
         await self._work()
