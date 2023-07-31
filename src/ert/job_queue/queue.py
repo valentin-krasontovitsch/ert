@@ -437,6 +437,7 @@ class JobQueue(BaseCClass):  # type: ignore
                     )
                     continue
                 if not self.is_active():
+                    logger.info("we are not active anymore")
                     break
 
         except asyncio.CancelledError:
@@ -455,6 +456,7 @@ class JobQueue(BaseCClass):  # type: ignore
             raise
 
         self.assert_complete()
+        logger.info("have asserted that we have completed, attempting final publish")
         self._differ.transition(self.job_list)
         # final publish
         async with connect(
@@ -469,6 +471,7 @@ class JobQueue(BaseCClass):  # type: ignore
             await JobQueue._publish_changes(
                 ens_id, self._differ.snapshot(), ee_connection
             )
+        logger.info("job queue done, over and out")
 
     async def execute_queue_comms_via_bus(  # pylint: disable=too-many-arguments
         self,

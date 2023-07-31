@@ -202,6 +202,7 @@ class JobQueueNode(BaseCClass):  # type: ignore
         time_until_longer_sleep_seconds = 30
         use_random_sleep_offset = False
         while self.is_running(current_status):
+            logger.info("job queue node is running!")
             if (
                 self._start_time is None
                 and current_status == JobStatusType.JOB_QUEUE_RUNNING
@@ -248,18 +249,23 @@ class JobQueueNode(BaseCClass):  # type: ignore
 
         self._end_time = time.time()
 
+        logger.info("job no longer running - checking state")
+
         with self._mutex:
             if current_status == JobStatusType.JOB_QUEUE_DONE:
+                logger.info("job queue is done, starting to load results")
                 with pool_sema:
                     logger.info(
                         f"Realization: {self.callback_arguments[0].iens} complete, "
                         "starting to load results"
                     )
                     self.run_done_callback()
+                    logger.info("done callback done!")
 
             # refresh cached status after running the callback
             current_status = self.refresh_status(driver)
             if current_status == JobStatusType.JOB_QUEUE_SUCCESS:
+                logger.info("job queue is success, moving on")
                 pass
             elif current_status == JobStatusType.JOB_QUEUE_EXIT:
                 if self.submit_attempt < max_submit:
@@ -295,6 +301,7 @@ class JobQueueNode(BaseCClass):  # type: ignore
                 )
 
             self._set_thread_status(ThreadStatus.DONE)
+            logger.info("have set thread status to done")
 
     def _kill(self, driver: "Driver") -> None:
         self._run_kill(driver)
