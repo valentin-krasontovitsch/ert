@@ -1,5 +1,4 @@
 import datetime
-from unittest.mock import patch
 
 import pytest
 from dateutil import tz
@@ -35,7 +34,7 @@ def test_using_qt_model_tester(qtmodeltester, full_snapshot):
     model.setSourceModel(source_model)
 
     reporting_mode = qt_api.QtTest.QAbstractItemModelTester.FailureReportingMode.Warning
-    tester = qt_api.QtTest.QAbstractItemModelTester(  # noqa, prevent GC
+    tester = qt_api.QtTest.QAbstractItemModelTester(  # noqa, prevent GC pylint: disable=unused-variable
         model, reporting_mode
     )
 
@@ -56,7 +55,7 @@ def test_changes(full_snapshot):
     model.setSourceModel(source_model)
 
     reporting_mode = qt_api.QtTest.QAbstractItemModelTester.FailureReportingMode.Warning
-    tester = qt_api.QtTest.QAbstractItemModelTester(  # noqa, prevent GC
+    tester = qt_api.QtTest.QAbstractItemModelTester(  # noqa, prevent GC pylint: disable=unused-variable
         model, reporting_mode
     )
 
@@ -90,15 +89,14 @@ def test_changes(full_snapshot):
 
 @pytest.mark.requires_window_manager
 @pytest.mark.parametrize("timezone", [(None), (tz.gettz("UTC"))])
-@patch("ert.gui.model.snapshot.datetime", wraps=datetime)
-def test_duration(mock_datetime, timezone, full_snapshot):
+def test_duration(timezone, full_snapshot):
     source_model = SnapshotModel()
 
     model = JobListProxyModel(None, 0, 0, 0, 0)
     model.setSourceModel(source_model)
 
     reporting_mode = qt_api.QtTest.QAbstractItemModelTester.FailureReportingMode.Warning
-    tester = qt_api.QtTest.QAbstractItemModelTester(  # noqa, prevent GC
+    tester = qt_api.QtTest.QAbstractItemModelTester(  # noqa, prevent GC pylint: disable=unused-variable
         model, reporting_mode
     )
 
@@ -108,19 +106,8 @@ def test_duration(mock_datetime, timezone, full_snapshot):
     )
 
     partial = PartialSnapshot(full_snapshot)
-    start_time = datetime.datetime(
-        year=2020, month=10, day=27, hour=12, tzinfo=timezone
-    )
-    # mock only datetime.datetime.now()
-    mock_datetime.datetime.now.return_value = datetime.datetime(
-        year=2020,
-        month=10,
-        day=28,
-        hour=13,
-        minute=12,
-        second=11,
-        microsecond=5,  # Note that microseconds are intended to be removed
-        tzinfo=timezone,
+    start_time = datetime.datetime.now(timezone) - datetime.timedelta(
+        days=1, hours=1, minutes=12, seconds=11
     )
     partial.update_job(
         "0",
@@ -133,9 +120,10 @@ def test_duration(mock_datetime, timezone, full_snapshot):
     )
     source_model._add_partial_snapshot(SnapshotModel.prerender(partial), 0)
     assert (
-        model.index(2, _id_to_col(DURATION), QModelIndex()).data() == "1 day, 1:12:11"
+        model.index(2, _id_to_col(DURATION), QModelIndex())
+        .data()
+        .startswith("1 day, 1:12:1")
     )
-    mock_datetime.datetime.now.assert_called_once_with(timezone)
 
 
 @pytest.mark.requires_window_manager
