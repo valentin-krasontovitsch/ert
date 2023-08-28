@@ -35,7 +35,6 @@ class MultipleDataAssimilation(BaseRunModel):
         storage: StorageAccessor,
         queue_config: QueueConfig,
         experiment_id: UUID,
-        prior_ensemble: Optional[EnsembleAccessor],
     ):
         super().__init__(
             simulation_arguments,
@@ -46,7 +45,6 @@ class MultipleDataAssimilation(BaseRunModel):
             phase_count=2,
         )
         self.weights = MultipleDataAssimilation.default_weights
-        self.prior_ensemble = prior_ensemble
 
     async def run(self, _: EvaluatorServerConfig) -> None:
         raise NotImplementedError()

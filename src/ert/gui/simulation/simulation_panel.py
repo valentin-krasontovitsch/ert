@@ -150,6 +150,7 @@ class SimulationPanel(QWidget):
                 model = create_model(
                     self.ert,
                     self.notifier.storage,
+                    args.mode,
                     args,
                     experiment.id,
                 )

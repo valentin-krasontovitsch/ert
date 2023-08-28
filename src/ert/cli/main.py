@@ -15,6 +15,7 @@ from ert.cli import (
     ITERATIVE_ENSEMBLE_SMOOTHER_MODE,
     TEST_RUN_MODE,
     WORKFLOW_MODE,
+    SIMULATION_MODES,
 )
 from ert.cli.model_factory import create_model
 from ert.cli.monitor import Monitor
@@ -44,6 +45,10 @@ def run_cli(args, _=None):
     args.config = os.path.basename(args.config)
     ert_config = ErtConfig.from_file(args.config)
     local_storage_set_ert_config(ert_config)
+
+    # command line argument can override parsed / default value for number of iteration:
+    if hasattr(args, "num_iterations") and args.num_iterations is not None:
+        ert_config.analysis_config.set_num_iterations(int(args.num_iterations))
 
     # Create logger inside function to make sure all handlers have been added to
     # the root-logger.
@@ -103,6 +108,7 @@ def run_cli(args, _=None):
         model = create_model(
             ert,
             storage,
+            args.mode,
             args,
             experiment.id,
         )
@@ -157,5 +163,7 @@ async def _run_cli_async(
     from ert.experiment_server import ExperimentServer
 
     experiment_server = ExperimentServer(ee_config)
-    experiment_server.add_experiment(create_model(ert, storage, args, experiment_id))
+    experiment_server.add_experiment(
+        create_model(ert, storage, args.mode, args, experiment_id)
+    )
     await experiment_server.run_experiment(experiment_id=experiment_id)

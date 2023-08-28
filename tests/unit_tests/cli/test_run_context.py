@@ -23,7 +23,7 @@ def test_that_all_iterations_gets_correct_name_and_iteration_number(storage):
     ert_mock.ensemble_context.return_value = MagicMock(iteration=3)
 
     test_class = MultipleDataAssimilation(
-        minimum_args, ert_mock, storage, MagicMock(), UUID(int=0), prior_ensemble=None
+        minimum_args, ert_mock, storage, MagicMock(), UUID(int=0)
     )
     test_class.run_ensemble_evaluator = MagicMock(return_value=1)
     test_class.run_experiment(MagicMock())

@@ -70,7 +70,7 @@ def test_hook_call_order_es_mda(storage):
     ert_mock.ensemble_context.return_value = MagicMock(iteration=1)
 
     test_class = MultipleDataAssimilation(
-        minimum_args, ert_mock, storage, MagicMock(), UUID(int=0), prior_ensemble=None
+        minimum_args, ert_mock, storage, MagicMock(), UUID(int=0)
     )
     ert_mock.runWorkflows = MagicMock()
     test_class.run_ensemble_evaluator = MagicMock(return_value=1)

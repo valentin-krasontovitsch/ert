@@ -191,6 +191,7 @@ def test_tracking(
         model = create_model(
             ert,
             storage,
+            parsed.mode,
             parsed,
             experiment_id,
         )
@@ -310,6 +311,7 @@ def test_setting_env_context_during_run(
         model = create_model(
             ert,
             storage,
+            parsed.mode,
             parsed,
             experiment_id,
         )
@@ -402,6 +404,7 @@ def test_tracking_missing_ecl(
         model = create_model(
             ert,
             storage,
+            parsed.mode,
             parsed,
             storage.create_experiment(
                 ert_config.ensemble_config.parameter_configuration

@@ -94,7 +94,7 @@ def fixture_setup_case(tmp_path, source_root, monkeypatch):
 
 
 @pytest.fixture()
-def poly_case(setup_case):
+def poly_case(setup_case) -> EnKFMain:
     return EnKFMain(setup_case("poly_example", "poly.ert"))
 
 
